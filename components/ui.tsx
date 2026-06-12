@@ -20,7 +20,7 @@ export function Button({
   const variants: Record<string, string> = {
     // accent fill, soft glow on hover — the one warm thing on the page
     primary:
-      "bg-accent text-[#0a0a0a] border border-accent hover:shadow-[0_0_24px_-2px_rgba(201,169,78,0.55)]",
+      "bg-accent text-[#0a0a0a] border border-accent hover:shadow-[0_0_24px_-2px_rgba(95,168,138,0.55)]",
     // glass-adjacent: bordered, fills on hover
     outline:
       "border border-border bg-surface text-foreground hover:bg-surface-2 hover:border-white/15",

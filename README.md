@@ -1,16 +1,28 @@
-# GradeCalc — Beat the Final Boss 🗡️
+# GradeCalc
 
-A clean, dark-mode grade calculator for college students. Enter your courses and
-grades, then find out **the exact score you need on the final** to lock in the
+A free, private grade calculator for college students. Add your courses and
+grades, and find out **the exact score you need on what's left** to land the
 grade you want.
 
-- ⚡ **Free & private** — all your grades live in your browser (localStorage). No
+- ⚡ **Free & private** — your grades live in your browser (localStorage). No
   account, no database, no tracking.
-- 🎯 **"What do I need on the final?"** — pick a target (A, B+, custom %) and a
-  category, and it solves for the score you need.
-- ✨ **AI auto-fill (optional)** — drop in your syllabus PDF and/or a screenshot
-  of your Canvas grades, and it fills in the categories, weights, and scores for
-  you. Powered by Google Gemini's **free** API tier.
+- 🎯 **"What do I need?"** — pick a target grade (A, B+, custom %) and a
+  category, and it solves for the score you need on that category.
+- ✨ **AI auto-fill (optional)** — drop in your syllabus PDF and/or a
+  screenshot of your grades (Canvas, etc.), and Gemini fills in the
+  categories, weights, and scores for you.
+- 🧠 **Onboarding tour** — a short first-visit walkthrough explains how
+  auto-fill, manual entry, and local persistence work.
+
+## Tech stack
+
+- [Next.js 16](https://nextjs.org/) (App Router, Turbopack) + [React 19](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS v4](https://tailwindcss.com/) (CSS-first config, `@theme inline`)
+- [Framer Motion](https://www.framer.com/motion/) for spring-based animation
+- [Lucide](https://lucide.dev/) icons
+- [Google Gemini](https://ai.google.dev/) (`@google/genai`) for AI auto-fill
+- Local-first persistence via `localStorage` — no backend database
 
 ## Run it locally
 
@@ -21,8 +33,8 @@ npm run dev
 
 Open http://localhost:3000.
 
-The calculator works fully with **zero setup**. The AI auto-fill is the only
-part that needs a key.
+The calculator works fully with **zero setup**. AI auto-fill is the only part
+that needs a key.
 
 ### Enable AI auto-fill (free, optional)
 
@@ -35,27 +47,43 @@ part that needs a key.
    Then set `GEMINI_API_KEY=your_key_here` in `.env.local`.
 3. Restart `npm run dev`.
 
-Your key stays on the server (the `/api/parse` route) and is never exposed to
-the browser.
+Alternatively, users can add their own key in the app (saved only in their
+browser) — it's sent once per auto-fill request and never stored on the
+server.
 
 ## Deploy free on Vercel
 
-1. Push this folder to a GitHub repo.
+1. Push this repo to GitHub.
 2. Import it at <https://vercel.com/new> (the free Hobby plan is plenty).
-3. To enable auto-fill in production, add an environment variable in the Vercel
-   project settings: `GEMINI_API_KEY` = your key.
+3. To enable auto-fill in production, add an environment variable in the
+   Vercel project settings: `GEMINI_API_KEY` = your key.
 4. Deploy. Done.
 
 ## How the math works
 
-- **Current grade** = weighted average over the categories you've actually been
-  graded in, renormalized by the graded weight.
-- **What you need** solves `total × target = lockedPoints + needed × weight` for
-  `needed`, treating other ungraded categories as 0% (a worst-case answer). If
-  the result is ≤ 0 you've already secured it; if it's > 100 it's not reachable.
+- **Current grade** = weighted average over the categories you've actually
+  been graded in, renormalized by the graded weight.
+- **What you need** solves `total × target = lockedPoints + needed × weight`
+  for `needed`, treating other ungraded categories as 0% (a worst-case
+  answer). If the result is ≤ 0 you've already secured it; if it's > 100 it's
+  not reachable.
 
-## Stack
+## Project structure
 
-Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Google Gemini
-(`@google/genai`) · lucide-react. Design system from the UI/UX Pro Max skill
-("Operation orange on dark").
+```
+app/
+  page.tsx          — main UI: hero, course list, course detail view
+  globals.css       — design tokens, theme, glass/specular effects
+  api/parse/route.ts — Gemini-backed syllabus/screenshot parser
+components/
+  CourseDetail.tsx  — categories table, target-grade solver, results
+  Autofill.tsx      — AI auto-fill modal (upload + review flow)
+  ApiKeyDialog.tsx  — manage your own Gemini API key
+  Welcome.tsx       — first-visit onboarding modal
+  ui.tsx            — shared primitives (Button, Card, GlassPanel, etc.)
+lib/
+  grades.ts         — grade math (current grade, needed score)
+  types.ts          — shared types
+  springs.ts        — shared Framer Motion spring presets
+  useCourses.ts / useApiKey.ts / useOnboarding.ts — localStorage-backed hooks
+```

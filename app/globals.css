@@ -9,9 +9,9 @@
   --color-muted: #888888;
   --color-text: #ededed;
 
-  --color-accent: #c9a94e;
-  --color-accent-soft: rgba(201, 169, 78, 0.24);
-  --color-accent-dim: rgba(201, 169, 78, 0.12);
+  --color-accent: #5fa88a;
+  --color-accent-soft: rgba(95, 168, 138, 0.24);
+  --color-accent-dim: rgba(95, 168, 138, 0.12);
 }
 
 @theme inline {
