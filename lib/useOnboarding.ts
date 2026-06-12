@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-const KEY = "gradecalc.onboarded.v1";
+const KEY = "gradehq.onboarded.v1";
 
 /**
  * Tracks whether the welcome/intro screen has been shown before. Defaults to

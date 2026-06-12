@@ -1,4 +1,4 @@
-# GradeCalc
+# GradeHQ
 
 A free, private grade calculator for college students. Add your courses and
 grades, and find out **the exact score you need on what's left** to land the

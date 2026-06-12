@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Course } from "./types";
 import { emptyCourse } from "./grades";
 
-const KEY = "gradecalc.courses.v1";
+const KEY = "gradehq.courses.v1";
 
 function load(): Course[] {
   if (typeof window === "undefined") return [];

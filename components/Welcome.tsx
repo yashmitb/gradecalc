@@ -54,7 +54,7 @@ export function Welcome({
           className="fixed inset-0 z-[70] flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
-          aria-label="Welcome to GradeCalc"
+          aria-label="Welcome to GradeHQ"
           initial="hidden"
           animate="show"
           exit="hidden"
@@ -101,7 +101,7 @@ export function Welcome({
                   </motion.span>
                   <h2 className="text-2xl font-extrabold tracking-tight">
                     Welcome to{" "}
-                    <span className="text-accent">GradeCalc</span>
+                    <span className="text-accent">GradeHQ</span>
                   </h2>
                 </motion.div>
                 <motion.p

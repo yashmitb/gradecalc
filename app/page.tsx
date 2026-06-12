@@ -230,13 +230,13 @@ function NavBar({
       <button
         onClick={onHome}
         className="flex items-center gap-2.5 cursor-pointer"
-        aria-label="GradeCalc home"
+        aria-label="GradeHQ home"
       >
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-dim text-accent">
           <Scale className="h-4 w-4" />
         </span>
         <span className="text-base font-extrabold tracking-tight">
-          GradeCalc
+          GradeHQ
         </span>
       </button>
       <div className="flex items-center gap-2">
@@ -244,8 +244,8 @@ function NavBar({
           variant="ghost"
           size="icon"
           onClick={onHelp}
-          aria-label="What is GradeCalc?"
-          title="What is GradeCalc?"
+          aria-label="What is GradeHQ?"
+          title="What is GradeHQ?"
         >
           <CircleHelp className="h-4 w-4" />
         </Button>

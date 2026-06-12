@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-const KEY = "gradecalc.geminiKey.v1";
+const KEY = "gradehq.geminiKey.v1";
 
 /**
  * Stores the user's own Gemini API key in localStorage (their browser only).

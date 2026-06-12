@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "GradeCalc — What do you need on the final?",
+  title: "GradeHQ — What do you need on the final?",
   description:
     "Figure out exactly what you need on the final to land the grade you want. Free, private, no sign-up.",
 };
