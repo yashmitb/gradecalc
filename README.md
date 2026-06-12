@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GradeCalc — Beat the Final Boss 🗡️
 
-## Getting Started
+A clean, dark-mode grade calculator for college students. Enter your courses and
+grades, then find out **the exact score you need on the final** to lock in the
+grade you want.
 
-First, run the development server:
+- ⚡ **Free & private** — all your grades live in your browser (localStorage). No
+  account, no database, no tracking.
+- 🎯 **"What do I need on the final?"** — pick a target (A, B+, custom %) and a
+  category, and it solves for the score you need.
+- ✨ **AI auto-fill (optional)** — drop in your syllabus PDF and/or a screenshot
+  of your Canvas grades, and it fills in the categories, weights, and scores for
+  you. Powered by Google Gemini's **free** API tier.
+
+## Run it locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The calculator works fully with **zero setup**. The AI auto-fill is the only
+part that needs a key.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Enable AI auto-fill (free, optional)
 
-## Learn More
+1. Get a free Gemini API key (no credit card) at
+   <https://aistudio.google.com/apikey>.
+2. Copy the example env file and paste your key:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Then set `GEMINI_API_KEY=your_key_here` in `.env.local`.
+3. Restart `npm run dev`.
 
-To learn more about Next.js, take a look at the following resources:
+Your key stays on the server (the `/api/parse` route) and is never exposed to
+the browser.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy free on Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Push this folder to a GitHub repo.
+2. Import it at <https://vercel.com/new> (the free Hobby plan is plenty).
+3. To enable auto-fill in production, add an environment variable in the Vercel
+   project settings: `GEMINI_API_KEY` = your key.
+4. Deploy. Done.
 
-## Deploy on Vercel
+## How the math works
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Current grade** = weighted average over the categories you've actually been
+  graded in, renormalized by the graded weight.
+- **What you need** solves `total × target = lockedPoints + needed × weight` for
+  `needed`, treating other ungraded categories as 0% (a worst-case answer). If
+  the result is ≤ 0 you've already secured it; if it's > 100 it's not reachable.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Stack
+
+Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Google Gemini
+(`@google/genai`) · lucide-react. Design system from the UI/UX Pro Max skill
+("Operation orange on dark").
