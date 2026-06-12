@@ -15,6 +15,7 @@ import { Autofill } from "@/components/Autofill";
 import { ApiKeyDialog } from "@/components/ApiKeyDialog";
 import { CourseDetail } from "@/components/CourseDetail";
 import { Welcome } from "@/components/Welcome";
+import { GitHubBadge } from "@/components/GitHubBadge";
 import { useCourses } from "@/lib/useCourses";
 import { useApiKey } from "@/lib/useApiKey";
 import { useOnboarding } from "@/lib/useOnboarding";
@@ -64,6 +65,7 @@ export default function Home() {
 
   return (
     <div className="pb-24">
+      <GitHubBadge />
       <Welcome open={onboarding.open} onClose={onboarding.dismiss} />
       <Autofill
         open={autofillOpen}
