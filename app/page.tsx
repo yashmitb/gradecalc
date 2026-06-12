@@ -38,6 +38,7 @@ export default function Home() {
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [autofillOpen, setAutofillOpen] = React.useState(false);
   const [keyOpen, setKeyOpen] = React.useState(false);
+  const [keyNotice, setKeyNotice] = React.useState<string | null>(null);
 
   const active = courses.find((c) => c.id === activeId) ?? null;
 
@@ -63,6 +64,17 @@ export default function Home() {
     setActiveId(c.id);
   };
 
+  const handleAutofillClick = () => {
+    if (!hasKey) {
+      setKeyNotice(
+        "Add a free Gemini API key first — auto-fill needs it to read your syllabus.",
+      );
+      setKeyOpen(true);
+      return;
+    }
+    setAutofillOpen(true);
+  };
+
   return (
     <div className="pb-24">
       <GitHubBadge />
@@ -77,9 +89,13 @@ export default function Home() {
       <ApiKeyDialog
         open={keyOpen}
         initialKey={key}
-        onClose={() => setKeyOpen(false)}
+        onClose={() => {
+          setKeyOpen(false);
+          setKeyNotice(null);
+        }}
         onSave={setKey}
         onClear={clearKey}
+        notice={keyNotice ?? undefined}
       />
 
       <NavBar
@@ -139,7 +155,7 @@ export default function Home() {
                 variants={fadeUp}
                 className="mt-7 flex flex-wrap items-center gap-2.5"
               >
-                <Button onClick={() => setAutofillOpen(true)}>
+                <Button onClick={handleAutofillClick}>
                   <Sparkles className="h-4 w-4" />
                   Auto-fill from syllabus
                 </Button>
