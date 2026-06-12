@@ -132,7 +132,7 @@ export function CourseDetail({
               <input
                 value={c.name}
                 onChange={(e) => setCat(c.id, { name: e.target.value })}
-                className="h-10 rounded-lg bg-transparent px-2 text-sm font-medium text-foreground outline-none focus:bg-surface-2"
+                className="h-10 w-full min-w-0 rounded-lg bg-transparent px-2 text-sm font-medium text-foreground outline-none focus:bg-surface-2"
                 aria-label="Category name"
               />
               <Input

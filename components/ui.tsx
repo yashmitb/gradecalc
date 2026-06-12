@@ -92,11 +92,11 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   function Input({ className, suffix, ...props }, ref) {
     return (
-      <div className="relative">
+      <div className="relative min-w-0">
         <input
           ref={ref}
           className={cn(
-            "h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground tnum",
+            "h-11 w-full min-w-0 rounded-xl border border-border bg-surface px-3 text-sm text-foreground tnum",
             "placeholder:text-muted",
             "outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent-dim",
             suffix && "pr-8",
