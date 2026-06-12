@@ -73,7 +73,7 @@ export function Welcome({
             transition={springs.smooth}
             className="w-full max-w-xl"
           >
-            <GlassPanel className="relative w-full overflow-hidden p-6 sm:p-8">
+            <GlassPanel className="relative max-h-[calc(100dvh-2rem)] w-full overflow-y-auto overflow-x-hidden p-6 sm:p-8">
               {/* ambient glow */}
               <motion.div
                 aria-hidden
@@ -145,7 +145,7 @@ export function Welcome({
 
                 <motion.div
                   variants={fadeUp}
-                  className="mt-7 flex items-center justify-between gap-3"
+                  className="mt-7 flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <p className="text-xs leading-relaxed text-muted">
                     You can revisit this anytime from the{" "}
@@ -154,7 +154,7 @@ export function Welcome({
                     </span>{" "}
                     button.
                   </p>
-                  <Button onClick={onClose} className="group">
+                  <Button onClick={onClose} className="group justify-center">
                     Get started
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Button>
