@@ -140,7 +140,9 @@ export function CourseDetail({
                 inputMode="decimal"
                 value={Number.isFinite(c.weight) ? c.weight : ""}
                 onChange={(e) =>
-                  setCat(c.id, { weight: parseFloat(e.target.value) || 0 })
+                  setCat(c.id, {
+                    weight: Math.max(0, parseFloat(e.target.value) || 0),
+                  })
                 }
                 className="h-10 text-right"
                 aria-label={`${c.name} weight`}
@@ -152,7 +154,9 @@ export function CourseDetail({
                 value={c.score ?? ""}
                 onChange={(e) => {
                   const v = e.target.value;
-                  setCat(c.id, { score: v === "" ? null : parseFloat(v) });
+                  setCat(c.id, {
+                    score: v === "" ? null : Math.max(0, parseFloat(v) || 0),
+                  });
                 }}
                 className="h-10 text-right"
                 aria-label={`${c.name} score`}

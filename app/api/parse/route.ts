@@ -4,13 +4,48 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Files we accept and their max size (keeps free-tier requests small & fast).
-const MAX_BYTES = 12 * 1024 * 1024; // 12 MB
+const MAX_BYTES = 12 * 1024 * 1024; // 12 MB per file
+const MAX_FILES = 4;
+// Hard ceiling on the whole request body — rejected before we even parse the
+// multipart form, so an oversized upload can't sit in memory first.
+const MAX_REQUEST_BYTES = MAX_FILES * MAX_BYTES + 1024 * 1024; // ~49 MB
 const ALLOWED = new Set([
   "application/pdf",
   "image/png",
   "image/jpeg",
   "image/webp",
 ]);
+
+// ---- very basic in-memory rate limit ----
+// Each call to this route hits the Gemini API, which costs quota/money. This
+// is a coarse per-instance guard against a single client hammering the
+// endpoint — it resets on cold start and isn't shared across instances, so
+// for real abuse protection put this behind a host-level rate limiter (e.g.
+// Vercel WAF / Cloudflare) too. Still meaningfully raises the bar for free.
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+const RATE_LIMIT_MAX = 12; // requests per window per IP
+const hits = new Map<string, { count: number; resetAt: number }>();
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = hits.get(ip);
+  if (!entry || now > entry.resetAt) {
+    hits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
+// Opportunistically bound the map's size so a flood of spoofed IPs can't
+// grow it forever between cold starts.
+function pruneHits() {
+  if (hits.size < 5000) return;
+  const now = Date.now();
+  for (const [ip, entry] of hits) {
+    if (now > entry.resetAt) hits.delete(ip);
+  }
+}
 
 const SYSTEM = `You extract a course's grade breakdown from a syllabus and/or screenshots of a grades page (e.g. Canvas, Gradescope).
 
@@ -65,6 +100,31 @@ Other rules:
 - Do not invent categories that aren't present.`;
 
 export async function POST(req: Request) {
+  // IP-based rate limit, before doing any work.
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
+  pruneHits();
+  if (rateLimited(ip)) {
+    return Response.json(
+      {
+        code: "rate-limit",
+        error: "Too many requests. Please wait a bit and try again.",
+      },
+      { status: 429 },
+    );
+  }
+
+  // Reject obviously-oversized bodies before buffering them into memory.
+  const contentLength = Number(req.headers.get("content-length") ?? "0");
+  if (contentLength > MAX_REQUEST_BYTES) {
+    return Response.json(
+      { error: "Upload too large. Try fewer or smaller files." },
+      { status: 413 },
+    );
+  }
+
   let form: FormData;
   try {
     form = await req.formData();
@@ -74,7 +134,9 @@ export async function POST(req: Request) {
 
   // Prefer the user's own key (sent from their browser, used once, never
   // stored). Fall back to a server-configured key for local/self-hosted use.
-  const userKey = String(form.get("apiKey") ?? "").trim();
+  const userKey = String(form.get("apiKey") ?? "")
+    .trim()
+    .slice(0, 200);
   const apiKey = userKey || process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return Response.json(
@@ -91,6 +153,12 @@ export async function POST(req: Request) {
   if (files.length === 0) {
     return Response.json(
       { error: "Attach a syllabus PDF or a screenshot of your grades." },
+      { status: 400 },
+    );
+  }
+  if (files.length > MAX_FILES) {
+    return Response.json(
+      { error: `Too many files — attach at most ${MAX_FILES}.` },
       { status: 400 },
     );
   }
