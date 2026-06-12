@@ -94,6 +94,7 @@ export function neededScore(
 }
 
 export function letterFor(grade: number): string {
+  if (grade >= 97) return "A+";
   if (grade >= 93) return "A";
   if (grade >= 90) return "A-";
   if (grade >= 87) return "B+";
@@ -102,8 +103,7 @@ export function letterFor(grade: number): string {
   if (grade >= 77) return "C+";
   if (grade >= 73) return "C";
   if (grade >= 70) return "C-";
-  if (grade >= 67) return "D+";
-  if (grade >= 60) return "D";
+  if (grade >= 55) return "D";
   return "F";
 }
 

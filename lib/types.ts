@@ -31,6 +31,7 @@ export type ParsedCourse = {
 };
 
 export const LETTER_TARGETS: { label: string; min: number }[] = [
+  { label: "A+", min: 97 },
   { label: "A", min: 93 },
   { label: "A-", min: 90 },
   { label: "B+", min: 87 },
