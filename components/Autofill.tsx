@@ -14,6 +14,25 @@ import { Button, GlassPanel, Input } from "./ui";
 import { springs } from "@/lib/springs";
 import type { ParsedCourse } from "@/lib/types";
 
+// Cycled through while a request is in flight so the button doesn't look
+// stuck on a long extract — purely cosmetic, doesn't reflect real progress.
+// Tailored a bit based on what was uploaded (PDF syllabus vs. grade
+// screenshots) so it reads as if it's actually working through each file.
+function statusMessages(files: File[]): string[] {
+  const hasPdf = files.some((f) => f.type === "application/pdf");
+  const hasImage = files.some((f) => f.type.startsWith("image/"));
+
+  const messages = ["Reading your files…"];
+  if (hasPdf) messages.push("Looking at the syllabus…");
+  if (hasPdf) messages.push("Finding grading categories and weights…");
+  if (hasImage) messages.push("Looking at your grades…");
+  if (hasImage) messages.push("Reading scores off the gradebook…");
+  messages.push("Cross-checking categories against scores…");
+  messages.push("Double-checking anything unclear…");
+  messages.push("Almost done…");
+  return messages;
+}
+
 export function Autofill({
   open,
   onClose,
@@ -39,7 +58,23 @@ export function Autofill({
   // paste their own key inline and retry without leaving this dialog.
   const [serverBusy, setServerBusy] = React.useState(false);
   const [ownKey, setOwnKey] = React.useState("");
+  const [statusIndex, setStatusIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Cycle the "thinking" status while a request is in flight, so it reads
+  // as progress rather than a frozen spinner on slow extracts.
+  const messages = React.useMemo(() => statusMessages(files), [files]);
+
+  React.useEffect(() => {
+    if (!busy) {
+      setStatusIndex(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setStatusIndex((i) => Math.min(i + 1, messages.length - 1));
+    }, 1800);
+    return () => clearInterval(id);
+  }, [busy, messages.length]);
 
   React.useEffect(() => {
     if (!open) {
@@ -343,7 +378,20 @@ export function Autofill({
                       {busy ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Reading…
+                          <span className="relative inline-grid overflow-hidden">
+                            <AnimatePresence mode="wait" initial={false}>
+                              <motion.span
+                                key={statusIndex}
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -6 }}
+                                transition={{ duration: 0.2 }}
+                                className="col-start-1 row-start-1"
+                              >
+                                {messages[statusIndex]}
+                              </motion.span>
+                            </AnimatePresence>
+                          </span>
                         </>
                       ) : (
                         <>
