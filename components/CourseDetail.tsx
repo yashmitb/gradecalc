@@ -54,6 +54,21 @@ export function CourseDetail({
   const gpaPoints = egrade !== null ? gpaPointsFor(egrade) : null;
   const includeInGPA = course.includeInGPA ?? true;
 
+  // The course title is an auto-growing textarea so long names wrap instead
+  // of clipping on narrow screens. Re-measure on edit and on viewport resize.
+  const nameRef = React.useRef<HTMLTextAreaElement>(null);
+  React.useLayoutEffect(() => {
+    const el = nameRef.current;
+    if (!el) return;
+    const resize = () => {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, [course.name]);
+
   React.useEffect(() => {
     const stillValid = cats.some((c) => c.id === targetCatId);
     if (!stillValid) {
@@ -115,10 +130,18 @@ export function CourseDetail({
 
       {/* Course name + current grade */}
       <Card className="mb-6 p-6">
-        <input
+        <textarea
+          ref={nameRef}
           value={course.name}
           onChange={(e) => onChange({ name: e.target.value })}
-          className="w-full bg-transparent text-3xl font-extrabold tracking-tight text-foreground outline-none placeholder:text-muted"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              e.currentTarget.blur();
+            }
+          }}
+          rows={1}
+          className="w-full resize-none overflow-hidden bg-transparent text-2xl font-extrabold leading-tight tracking-tight text-foreground outline-none placeholder:text-muted sm:text-3xl"
           placeholder="Course name"
           aria-label="Course name"
         />

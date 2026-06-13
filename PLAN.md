@@ -180,3 +180,9 @@ what's in flight, and any decisions made along the way.
             ambient glow, accent, grid) is tuned for dark; a light theme is a
             large design decision with high cross-app visual-bug risk — better
             to design it deliberately with the user than guess.
+- [x] Final QA pass — full review at 390px (mobile) and 1280px (desktop)
+      across all phases; verified no console errors, build + lint clean
+      (only the pre-existing localStorage-hook set-state-in-effect lint
+      pattern remains). Fixed the course-title overflow: the name is now an
+      auto-growing textarea that wraps long titles ("MUS 1 — Intro to Music
+      Theory and Composition") instead of clipping on narrow screens.
