@@ -12,6 +12,9 @@ const KEY = "gradehq.geminiKey.v1";
 export function useApiKey() {
   const [key, setKeyState] = useState<string>("");
   const [ready, setReady] = useState(false);
+  // Whether a shared/free Gemini key is configured on the server. `null`
+  // while we haven't checked yet.
+  const [hasServerKey, setHasServerKey] = useState<boolean | null>(null);
 
   useEffect(() => {
     try {
@@ -20,6 +23,21 @@ export function useApiKey() {
       /* ignore */
     }
     setReady(true);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/parse")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled) setHasServerKey(!!data?.hasServerKey);
+      })
+      .catch(() => {
+        if (!cancelled) setHasServerKey(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const setKey = useCallback((value: string) => {
@@ -35,5 +53,12 @@ export function useApiKey() {
 
   const clearKey = useCallback(() => setKey(""), [setKey]);
 
-  return { key, setKey, clearKey, ready, hasKey: key.length > 0 };
+  return {
+    key,
+    setKey,
+    clearKey,
+    ready,
+    hasKey: key.length > 0,
+    hasServerKey,
+  };
 }

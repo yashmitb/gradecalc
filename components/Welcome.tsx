@@ -93,12 +93,14 @@ export function Welcome({
                 className="relative"
               >
                 <motion.div variants={fadeUp} className="mb-2 flex items-center gap-3">
-                  <motion.span
+                  <motion.img
                     variants={icon}
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-dim text-accent"
-                  >
-                    <Sparkles className="h-5 w-5" />
-                  </motion.span>
+                    src="/logo.svg"
+                    alt=""
+                    className="h-11 w-11 shrink-0 rounded-2xl"
+                    width={44}
+                    height={44}
+                  />
                   <h2 className="text-2xl font-extrabold tracking-tight">
                     Welcome to{" "}
                     <span className="text-accent">GradeHQ</span>

@@ -99,6 +99,12 @@ Other rules:
 - Weights should be plain numbers that ideally sum to ~100. If the syllabus lists weights as fractions (0.2), convert to percent (20).
 - Do not invent categories that aren't present.`;
 
+// Lets the client check (without hitting Gemini) whether a shared/free key is
+// configured on this deployment, so the UI can show the right key status.
+export async function GET() {
+  return Response.json({ hasServerKey: !!process.env.GEMINI_API_KEY });
+}
+
 export async function POST(req: Request) {
   // IP-based rate limit, before doing any work.
   const ip =

@@ -2,19 +2,28 @@
 
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ExternalLink, KeyRound, Lock, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  ExternalLink,
+  KeyRound,
+  Lock,
+  X,
+} from "lucide-react";
 import { Button, GlassPanel, Input, Label } from "./ui";
 import { springs } from "@/lib/springs";
 
 export function ApiKeyDialog({
   open,
   initialKey,
+  hasServerKey,
   onClose,
   onSave,
   onClear,
 }: {
   open: boolean;
   initialKey: string;
+  hasServerKey: boolean | null;
   onClose: () => void;
   onSave: (key: string) => void;
   onClear: () => void;
@@ -71,17 +80,37 @@ export function ApiKeyDialog({
                   Your Gemini API key
                 </h2>
               </div>
-              <p className="mb-3 flex items-start gap-2 rounded-xl border border-accent-soft bg-accent-dim px-3 py-2 text-sm leading-relaxed text-foreground">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                <span>
-                  A free shared key is already active — auto-fill just works,
-                  no setup needed.
-                </span>
-              </p>
+              {initialKey ? (
+                <p className="mb-3 flex items-start gap-2 rounded-xl border border-accent-soft bg-accent-dim px-3 py-2 text-sm leading-relaxed text-foreground">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                  <span>
+                    Your own key is connected — auto-fill uses it for every
+                    request.
+                  </span>
+                </p>
+              ) : hasServerKey ? (
+                <p className="mb-3 flex items-start gap-2 rounded-xl border border-accent-soft bg-accent-dim px-3 py-2 text-sm leading-relaxed text-foreground">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                  <span>
+                    A free shared key is already active — auto-fill just works,
+                    no setup needed.
+                  </span>
+                </p>
+              ) : (
+                <p className="mb-3 flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm leading-relaxed text-foreground">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+                  <span>
+                    No free key is available right now — add your own below
+                    to use auto-fill.
+                  </span>
+                </p>
+              )}
               <p className="mb-5 text-sm leading-relaxed text-muted">
-                You only need your own key if the shared one hits its daily
-                limit (you&apos;ll see a message when that happens), or if
-                you&apos;d simply rather use your own account.
+                {initialKey
+                  ? "Remove it to fall back to the free shared key (if one is available)."
+                  : hasServerKey
+                    ? "You only need your own key if the shared one hits its daily limit (you'll see a message when that happens), or if you'd simply rather use your own account."
+                    : "Add a free Gemini API key from Google AI Studio to start using auto-fill."}
               </p>
 
               <Label htmlFor="gemini-key">API key</Label>

@@ -32,7 +32,7 @@ import type { Course, ParsedCourse } from "@/lib/types";
 export default function Home() {
   const { courses, ready, addCourse, updateCourse, removeCourse } =
     useCourses();
-  const { key, setKey, clearKey, hasKey } = useApiKey();
+  const { key, setKey, clearKey, hasKey, hasServerKey } = useApiKey();
   const onboarding = useOnboarding();
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [autofillOpen, setAutofillOpen] = React.useState(false);
@@ -77,6 +77,7 @@ export default function Home() {
       <ApiKeyDialog
         open={keyOpen}
         initialKey={key}
+        hasServerKey={hasServerKey}
         onClose={() => setKeyOpen(false)}
         onSave={setKey}
         onClear={clearKey}
@@ -84,6 +85,7 @@ export default function Home() {
 
       <NavBar
         hasKey={hasKey}
+        hasServerKey={hasServerKey}
         onHome={() => setActiveId(null)}
         onKey={() => setKeyOpen(true)}
         onHelp={onboarding.reopen}
@@ -190,16 +192,49 @@ export default function Home() {
 
 function NavBar({
   hasKey,
+  hasServerKey,
   onHome,
   onKey,
   onHelp,
 }: {
   hasKey: boolean;
+  hasServerKey: boolean | null;
   onHome: () => void;
   onKey: () => void;
   onHelp: () => void;
 }) {
   const [scrolled, setScrolled] = React.useState(false);
+
+  // Three-state key status:
+  // - "own": the user supplied their own Gemini key (green)
+  // - "free": no personal key, but the shared/free key is available (yellow)
+  // - "none": no personal key and no shared key configured (red)
+  // - "checking": still waiting on the server-key check
+  const keyStatus = hasKey
+    ? "own"
+    : hasServerKey === null
+      ? "checking"
+      : hasServerKey
+        ? "free"
+        : "none";
+
+  const dotClass =
+    keyStatus === "own"
+      ? "bg-emerald-400"
+      : keyStatus === "free"
+        ? "bg-yellow-400"
+        : keyStatus === "none"
+          ? "bg-red-400"
+          : "bg-muted";
+
+  const label =
+    keyStatus === "own"
+      ? "Your key connected"
+      : keyStatus === "free"
+        ? "Free key available"
+        : keyStatus === "none"
+          ? "No key available"
+          : "Checking key…";
 
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -260,22 +295,23 @@ function NavBar({
           size="sm"
           onClick={onKey}
           className={
-            hasKey
+            keyStatus === "own"
               ? "border-accent-soft bg-accent-dim text-accent hover:bg-accent-dim hover:border-accent-soft"
-              : undefined
+              : keyStatus === "none"
+                ? "border-red-500/30 bg-red-500/10 text-red-300 hover:border-red-500/30 hover:bg-red-500/10"
+                : undefined
           }
         >
           <span className="relative flex h-2 w-2 shrink-0">
+            {keyStatus === "none" && (
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+            )}
             <span
-              className={`relative inline-flex h-2 w-2 rounded-full transition-colors ${
-                hasKey ? "bg-accent" : "bg-muted"
-              }`}
+              className={`relative inline-flex h-2 w-2 rounded-full transition-colors ${dotClass}`}
             />
           </span>
           <KeyRound className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">
-            {hasKey ? "Your key connected" : "Free key available"}
-          </span>
+          <span className="hidden sm:inline">{label}</span>
         </Button>
       </div>
     </motion.header>
