@@ -71,8 +71,10 @@ export function Autofill({
       return;
     }
     const id = setInterval(() => {
-      setStatusIndex((i) => Math.min(i + 1, messages.length - 1));
-    }, 1800);
+      // Loop back to the start if it's taking a while, so a slow extract
+      // keeps feeling active instead of stalling on "Almost done…".
+      setStatusIndex((i) => (i + 1) % messages.length);
+    }, 1300);
     return () => clearInterval(id);
   }, [busy, messages.length]);
 
