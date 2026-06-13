@@ -14,6 +14,10 @@ export type Course = {
   categories: Category[];
   /** The grade (%) the user is aiming for in this course. Defaults to 90. */
   targetGrade?: number;
+  /** Credit hours / units, used for GPA rollups. Defaults to 4. */
+  credits?: number;
+  /** Whether this course counts toward GPA (false for pass/fail, audit, etc). Defaults to true. */
+  includeInGPA?: boolean;
 };
 
 /** Something the AI couldn't resolve confidently and needs the user to confirm. */

@@ -17,6 +17,7 @@ import {
   totalWeight,
   uid,
 } from "@/lib/grades";
+import { DEFAULT_CREDITS, effectiveGrade, fmtGPA, gpaPointsFor } from "@/lib/gpa";
 
 export function CourseDetail({
   course,
@@ -39,6 +40,10 @@ export function CourseDetail({
   const targetGrade = course.targetGrade ?? 90;
   const setTargetGrade = (v: number) => onChange({ targetGrade: v });
   const status = courseStatus(cats, targetGrade);
+
+  const egrade = effectiveGrade(course);
+  const gpaPoints = egrade !== null ? gpaPointsFor(egrade) : null;
+  const includeInGPA = course.includeInGPA ?? true;
 
   React.useEffect(() => {
     const stillValid = cats.some((c) => c.id === targetCatId);
@@ -123,6 +128,41 @@ export function CourseDetail({
             <GradeProgressBar current={cur} target={targetGrade} status={status} />
           </div>
         )}
+
+        <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-border pt-5 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+              Units
+            </span>
+            <Input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              value={course.credits ?? DEFAULT_CREDITS}
+              onChange={(e) =>
+                onChange({
+                  credits: Math.max(0, parseFloat(e.target.value) || 0),
+                })
+              }
+              className="h-9 w-16 px-2 text-center"
+              aria-label="Credit units"
+            />
+          </div>
+          <label className="flex cursor-pointer items-center gap-2 text-muted">
+            <input
+              type="checkbox"
+              checked={includeInGPA}
+              onChange={(e) => onChange({ includeInGPA: e.target.checked })}
+              className="h-4 w-4 cursor-pointer rounded border-border bg-surface accent-[var(--color-accent)]"
+            />
+            Count toward GPA
+          </label>
+          {gpaPoints !== null && includeInGPA && (
+            <span className="tnum ml-auto rounded-full border border-accent-soft bg-accent-dim px-2.5 py-1 text-xs font-bold text-accent">
+              {fmtGPA(gpaPoints)} GPA pts
+            </span>
+          )}
+        </div>
       </Card>
 
       {/* Category breakdown */}

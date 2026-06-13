@@ -136,8 +136,13 @@ Parked features from the original brainstorm, roughly grouped:
 This section is updated as work progresses through each phase — what's done,
 what's in flight, and any decisions made along the way.
 
-- [ ] Phase 1: Visualization
-- [ ] Phase 2: Cross-Course GPA Calculator
+- [x] Phase 1: Visualization — category breakdown bar, grade progress bar
+      with target marker, secured/on-track/at-risk status badges (course
+      tiles + detail), dashboard summary stats row. Shipped in 48a3d9d.
+- [x] Phase 2: Cross-Course GPA Calculator — per-course units + "count toward
+      GPA" toggle, GPA points badge, semester GPA rollup, optional prior-GPA
+      blending into a cumulative GPA, and a "what GPA do I need this
+      semester" solver (locked-in / impossible / target value).
 - [ ] Phase 3: GPA What-If Sliders
 - [ ] Phase 4: AI / Auto-fill Enhancements
 - [ ] Phase 5: Personalization / UX
