@@ -18,20 +18,27 @@ import type { ParsedCourse } from "@/lib/types";
 // stuck on a long extract — purely cosmetic, doesn't reflect real progress.
 // Tailored a bit based on what was uploaded (PDF syllabus vs. grade
 // screenshots) so it reads as if it's actually working through each file.
+// Kept to 2-3 words each so they crossfade quickly without wrapping.
+// "Almost done…" is intentionally NOT in this list — it's only shown once
+// the cycle has looped a couple times, so it doesn't give false hope on a
+// request that's actually just getting started.
 function statusMessages(files: File[]): string[] {
   const hasPdf = files.some((f) => f.type === "application/pdf");
   const hasImage = files.some((f) => f.type.startsWith("image/"));
 
-  const messages = ["Reading your files…"];
-  if (hasPdf) messages.push("Looking at the syllabus…");
-  if (hasPdf) messages.push("Finding grading categories and weights…");
-  if (hasImage) messages.push("Looking at your grades…");
-  if (hasImage) messages.push("Reading scores off the gradebook…");
-  messages.push("Cross-checking categories against scores…");
-  messages.push("Double-checking anything unclear…");
-  messages.push("Almost done…");
+  const messages = ["Reading files…"];
+  if (hasPdf) messages.push("Scanning syllabus…");
+  if (hasPdf) messages.push("Finding categories…");
+  if (hasImage) messages.push("Reading grades…");
+  if (hasImage) messages.push("Matching scores…");
+  messages.push("Checking weights…");
+  messages.push("Cross-checking…");
   return messages;
 }
+
+const ALMOST_DONE = "Almost done…";
+// How many full loops through the cycle before switching to "Almost done…".
+const LOOPS_BEFORE_ALMOST_DONE = 2;
 
 export function Autofill({
   open,
@@ -71,12 +78,22 @@ export function Autofill({
       return;
     }
     const id = setInterval(() => {
-      // Loop back to the start if it's taking a while, so a slow extract
-      // keeps feeling active instead of stalling on "Almost done…".
-      setStatusIndex((i) => (i + 1) % messages.length);
+      // Loop through the cycle, but after a couple full passes settle on
+      // "Almost done…" — by then it plausibly is, and we stop claiming it
+      // before that.
+      setStatusIndex((i) =>
+        i + 1 >= messages.length * LOOPS_BEFORE_ALMOST_DONE
+          ? messages.length * LOOPS_BEFORE_ALMOST_DONE
+          : i + 1,
+      );
     }, 1300);
     return () => clearInterval(id);
   }, [busy, messages.length]);
+
+  const statusText =
+    statusIndex >= messages.length * LOOPS_BEFORE_ALMOST_DONE
+      ? ALMOST_DONE
+      : messages[statusIndex % messages.length];
 
   React.useEffect(() => {
     if (!open) {
@@ -390,7 +407,7 @@ export function Autofill({
                                 transition={{ duration: 0.2 }}
                                 className="col-start-1 row-start-1"
                               >
-                                {messages[statusIndex]}
+                                {statusText}
                               </motion.span>
                             </AnimatePresence>
                           </span>
