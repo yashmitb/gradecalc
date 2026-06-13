@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { animate, motion } from "framer-motion";
-import { ArrowLeft, Plus, Trash2, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Plus, RefreshCw, Trash2, TriangleAlert } from "lucide-react";
 import { Button, Card, GlassPanel, Input, Label, Pill } from "./ui";
 import { CategoryBreakdown, GradeProgressBar, StatusBadge } from "./Visualizations";
 import { springs } from "@/lib/springs";
@@ -23,11 +23,14 @@ export function CourseDetail({
   course,
   onChange,
   onBack,
+  onResync,
   onDelete,
 }: {
   course: Course;
   onChange: (patch: Partial<Course>) => void;
   onBack: () => void;
+  /** Open the auto-fill dialog in re-sync mode to update this course. */
+  onResync: () => void;
   onDelete: () => void;
 }) {
   const cats = course.categories;
@@ -90,10 +93,17 @@ export function CourseDetail({
           <ArrowLeft className="h-4 w-4" />
           All courses
         </Button>
-        <Button variant="danger" size="sm" onClick={onDelete}>
-          <Trash2 className="h-4 w-4" />
-          Delete
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onResync}>
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline">Update from upload</span>
+            <span className="sm:hidden">Update</span>
+          </Button>
+          <Button variant="danger" size="sm" onClick={onDelete}>
+            <Trash2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Delete</span>
+          </Button>
+        </div>
       </div>
 
       {/* Course name + current grade */}

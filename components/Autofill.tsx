@@ -3,8 +3,11 @@
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowRight,
   Check,
   Loader2,
+  Plus,
+  RefreshCw,
   Sparkles,
   TriangleAlert,
   UploadCloud,
@@ -12,7 +15,9 @@ import {
 } from "lucide-react";
 import { Button, GlassPanel, Input } from "./ui";
 import { springs } from "@/lib/springs";
-import type { ParsedCourse } from "@/lib/types";
+import { fmt } from "@/lib/grades";
+import { planMerge, type MergePlan } from "@/lib/merge";
+import type { Course, ParsedCourse } from "@/lib/types";
 
 // Cycled through while a request is in flight so the button doesn't look
 // stuck on a long extract — purely cosmetic, doesn't reflect real progress.
@@ -47,6 +52,8 @@ export function Autofill({
   apiKey,
   onSaveKey,
   onNeedKey,
+  mergeTarget,
+  onMerge,
 }: {
   open: boolean;
   onClose: () => void;
@@ -55,12 +62,22 @@ export function Autofill({
   /** Persist a key the user pastes in after the shared server is busy. */
   onSaveKey: (key: string) => void;
   onNeedKey: () => void;
+  /** When set, the dialog runs in "re-sync" mode: a fresh upload is merged
+   *  into this existing course (scores updated in place) rather than added as
+   *  a new course. */
+  mergeTarget?: Course | null;
+  /** Apply a planned merge to the existing course. Required in merge mode. */
+  onMerge?: (merged: Course) => void;
 }) {
+  const merging = !!mergeTarget;
   const [files, setFiles] = React.useState<File[]>([]);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [drag, setDrag] = React.useState(false);
   const [pending, setPending] = React.useState<ParsedCourse | null>(null);
+  // In merge mode, a computed preview of how the upload folds into the
+  // existing course — shown for confirmation before anything is applied.
+  const [mergePlan, setMergePlan] = React.useState<MergePlan | null>(null);
   // Shown when the shared free key hits its daily limit — lets the user
   // paste their own key inline and retry without leaving this dialog.
   const [serverBusy, setServerBusy] = React.useState(false);
@@ -101,6 +118,7 @@ export function Autofill({
       setError(null);
       setBusy(false);
       setPending(null);
+      setMergePlan(null);
       setServerBusy(false);
       setOwnKey("");
     }
@@ -145,7 +163,11 @@ export function Autofill({
       }
       setServerBusy(false);
       const parsed = data as ParsedCourse;
-      if (parsed.flags && parsed.flags.length > 0) {
+      if (mergeTarget) {
+        // Re-sync: show a diff of how this upload folds into the existing
+        // course before changing anything.
+        setMergePlan(planMerge(mergeTarget, parsed));
+      } else if (parsed.flags && parsed.flags.length > 0) {
         // Hold off on importing — let the user see what we couldn't
         // confidently determine before it lands in their course.
         setPending(parsed);
@@ -201,7 +223,17 @@ export function Autofill({
                 <X className="h-5 w-5" />
               </button>
 
-              {pending ? (
+              {mergePlan ? (
+                <MergePreview
+                  plan={mergePlan}
+                  courseName={mergeTarget?.name ?? "this course"}
+                  onBack={() => setMergePlan(null)}
+                  onConfirm={() => {
+                    onMerge?.(mergePlan.merged);
+                    setMergePlan(null);
+                  }}
+                />
+              ) : pending ? (
                 <>
                   <div className="mb-1 flex items-center gap-2">
                     <TriangleAlert className="h-5 w-5 text-accent" />
@@ -249,22 +281,40 @@ export function Autofill({
               ) : (
                 <>
                   <div className="mb-1 flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-accent" />
+                    {merging ? (
+                      <RefreshCw className="h-5 w-5 text-accent" />
+                    ) : (
+                      <Sparkles className="h-5 w-5 text-accent" />
+                    )}
                     <h2 className="text-lg font-bold tracking-tight">
-                      Auto-fill with AI
+                      {merging
+                        ? `Update ${mergeTarget?.name ?? "course"}`
+                        : "Auto-fill with AI"}
                     </h2>
                   </div>
-                  <p className="mb-5 text-sm leading-relaxed text-muted">
-                    Drop in your{" "}
-                    <strong className="text-foreground">syllabus PDF</strong>{" "}
-                    and/or a{" "}
-                    <strong className="text-foreground">
-                      screenshot of your grades
-                    </strong>{" "}
-                    (Canvas works great). We&apos;ll pull out the categories,
-                    weights, and any scores we can see — and flag anything
-                    we&apos;re not sure about instead of guessing.
-                  </p>
+                  {merging ? (
+                    <p className="mb-5 text-sm leading-relaxed text-muted">
+                      Drop in a newer{" "}
+                      <strong className="text-foreground">
+                        screenshot of your grades
+                      </strong>{" "}
+                      (or an updated syllabus). We&apos;ll update your scores and
+                      pull in any new categories — your weights and edits stay
+                      put, and you&apos;ll see exactly what changes first.
+                    </p>
+                  ) : (
+                    <p className="mb-5 text-sm leading-relaxed text-muted">
+                      Drop in your{" "}
+                      <strong className="text-foreground">syllabus PDF</strong>{" "}
+                      and/or a{" "}
+                      <strong className="text-foreground">
+                        screenshot of your grades
+                      </strong>{" "}
+                      (Canvas works great). We&apos;ll pull out the categories,
+                      weights, and any scores we can see — and flag anything
+                      we&apos;re not sure about instead of guessing.
+                    </p>
+                  )}
 
                   <div
                     onDragOver={(e) => {
@@ -412,6 +462,11 @@ export function Autofill({
                             </AnimatePresence>
                           </span>
                         </>
+                      ) : merging ? (
+                        <>
+                          <RefreshCw className="h-4 w-4" />
+                          Review update
+                        </>
                       ) : (
                         <>
                           <Sparkles className="h-4 w-4" />
@@ -427,5 +482,137 @@ export function Autofill({
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/** Score as a percent, or an em-dash when not graded. */
+function scoreLabel(score: number | null): string {
+  return score === null ? "—" : `${fmt(score)}%`;
+}
+
+/**
+ * Re-sync confirmation: shows exactly which scores will change and which
+ * categories will be added before anything touches the saved course.
+ */
+function MergePreview({
+  plan,
+  courseName,
+  onBack,
+  onConfirm,
+}: {
+  plan: MergePlan;
+  courseName: string;
+  onBack: () => void;
+  onConfirm: () => void;
+}) {
+  const changed = plan.rows.filter(
+    (r) => r.kind === "updated" || r.kind === "added",
+  );
+  const unchanged = plan.rows.length - changed.length;
+  const nothingChanged = plan.updated === 0 && plan.added === 0;
+
+  return (
+    <>
+      <div className="mb-1 flex items-center gap-2">
+        <RefreshCw className="h-5 w-5 text-accent" />
+        <h2 className="text-lg font-bold tracking-tight">
+          {nothingChanged ? "Already up to date" : "Review the update"}
+        </h2>
+      </div>
+      <p className="mb-4 text-sm leading-relaxed text-muted">
+        {nothingChanged ? (
+          <>
+            Nothing new for{" "}
+            <strong className="text-foreground">{courseName}</strong> — the
+            scores in this upload already match what you have.
+          </>
+        ) : (
+          <>
+            Here&apos;s what will change in{" "}
+            <strong className="text-foreground">{courseName}</strong>.
+            Everything else stays exactly as it is.
+          </>
+        )}
+      </p>
+
+      {changed.length > 0 && (
+        <motion.ul
+          className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface"
+          initial="hidden"
+          animate="show"
+          variants={{
+            hidden: {},
+            show: { transition: { staggerChildren: 0.04 } },
+          }}
+        >
+          {changed.map((r, i) => (
+            <motion.li
+              key={i}
+              variants={{
+                hidden: { opacity: 0, y: 6 },
+                show: { opacity: 1, y: 0 },
+              }}
+              className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm"
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                {r.kind === "added" ? (
+                  <Plus className="h-3.5 w-3.5 shrink-0 text-accent" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5 shrink-0 text-accent" />
+                )}
+                <span className="truncate font-semibold text-foreground">
+                  {r.name}
+                </span>
+                {r.kind === "added" && (
+                  <span className="shrink-0 rounded-full border border-accent-soft bg-accent-dim px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
+                    New
+                  </span>
+                )}
+              </div>
+              <div className="tnum flex shrink-0 items-center gap-1.5 font-semibold">
+                {r.kind === "updated" ? (
+                  <>
+                    <span className="text-muted">{scoreLabel(r.from)}</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-muted" />
+                    <span className="text-foreground">{scoreLabel(r.to)}</span>
+                  </>
+                ) : (
+                  <span className="text-foreground">
+                    {scoreLabel(r.score)}
+                    <span className="ml-1 text-xs font-medium text-muted">
+                      · {fmt(r.weight, 0)}%
+                    </span>
+                  </span>
+                )}
+              </div>
+            </motion.li>
+          ))}
+        </motion.ul>
+      )}
+
+      {unchanged > 0 && (
+        <p className="mt-3 text-xs leading-relaxed text-muted">
+          {`${unchanged} categor${unchanged === 1 ? "y" : "ies"} unchanged.`}
+        </p>
+      )}
+
+      <div className="mt-5 flex justify-end gap-2">
+        <Button variant="ghost" onClick={onBack}>
+          Back
+        </Button>
+        <Button onClick={onConfirm}>
+          {nothingChanged ? (
+            "Done"
+          ) : (
+            <>
+              <Check className="h-4 w-4" />
+              {`Apply ${plan.updated + plan.added} change${
+                plan.updated + plan.added === 1 ? "" : "s"
+              }`}
+            </>
+          )}
+        </Button>
+      </div>
+    </>
   );
 }

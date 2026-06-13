@@ -147,5 +147,22 @@ what's in flight, and any decisions made along the way.
       sliders (accent-styled track + thumb) that live-update each course's
       letter/GPA points plus the projected semester and cumulative GPA, without
       touching real category scores. Reset clears all overrides.
-- [ ] Phase 4: AI / Auto-fill Enhancements
+- [~] Phase 4: AI / Auto-fill Enhancements (partial — headline feature shipped)
+      - [x] Re-sync / merge from a new upload — "Update from upload" on a
+            course opens the auto-fill dialog in merge mode; a fresh screenshot
+            is diffed against the existing course (scores updated in place,
+            new categories added, weights + untouched categories preserved,
+            blank scores never wipe real ones) with a confirm-first preview.
+            No more duplicate courses. Verified end-to-end against a real parse.
+      - [x] Drop / replacement-rule detection from syllabus text — already
+            handled by the existing parser + flags mechanism (route prompt
+            Steps 3A-3C); surfaced in the "double-check a few things" screen.
+      - [ ] DEFERRED (left for review — ambiguous/risky per autonomous-run
+            guardrails): conversational "fix this field" correction (needs a
+            new AI endpoint + UX design; manual edit already covers it);
+            persisting per-field confidence highlighting into the course view
+            (marginal over flags, which already null + explain uncertain
+            scores); auto-detecting & storing a custom %→letter→GPA grading
+            scale (Phase 2 intentionally ships a fixed scale — integration
+            unclear, revisit with the user).
 - [ ] Phase 5: Personalization / UX

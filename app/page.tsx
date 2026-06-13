@@ -41,8 +41,11 @@ export default function Home() {
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [autofillOpen, setAutofillOpen] = React.useState(false);
   const [keyOpen, setKeyOpen] = React.useState(false);
+  // When set, the auto-fill dialog opens in "re-sync" mode for this course.
+  const [mergeTargetId, setMergeTargetId] = React.useState<string | null>(null);
 
   const active = courses.find((c) => c.id === activeId) ?? null;
+  const mergeTarget = courses.find((c) => c.id === mergeTargetId) ?? null;
 
   const handleParsed = (parsed: ParsedCourse) => {
     const course: Course = {
@@ -71,12 +74,20 @@ export default function Home() {
       <GitHubBadge />
       <Welcome open={onboarding.open} onClose={onboarding.dismiss} />
       <Autofill
-        open={autofillOpen}
-        onClose={() => setAutofillOpen(false)}
+        open={autofillOpen || mergeTargetId !== null}
+        onClose={() => {
+          setAutofillOpen(false);
+          setMergeTargetId(null);
+        }}
         onParsed={handleParsed}
         apiKey={key}
         onSaveKey={setKey}
         onNeedKey={() => setKeyOpen(true)}
+        mergeTarget={mergeTarget}
+        onMerge={(merged) => {
+          updateCourse(merged.id, merged);
+          setMergeTargetId(null);
+        }}
       />
       <ApiKeyDialog
         open={keyOpen}
@@ -101,6 +112,7 @@ export default function Home() {
             course={active}
             onChange={(patch) => updateCourse(active.id, patch)}
             onBack={() => setActiveId(null)}
+            onResync={() => setMergeTargetId(active.id)}
             onDelete={() => {
               removeCourse(active.id);
               setActiveId(null);
