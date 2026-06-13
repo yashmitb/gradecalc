@@ -93,6 +93,27 @@ export function neededScore(
   return { kind: "possible", needed };
 }
 
+export type CourseStatus = "secured" | "on-track" | "at-risk" | "unknown";
+
+/**
+ * Status of a course relative to a target grade:
+ * - "secured": even a 0% on everything left to grade keeps you at/above target
+ * - "at-risk": even a 100% on everything left to grade can't reach target
+ * - "on-track": target is still reachable but not yet guaranteed
+ * - "unknown": no weight to evaluate (e.g. empty category list)
+ */
+export function courseStatus(
+  categories: Category[],
+  targetGrade: number,
+): CourseStatus {
+  const worst = projectedGrade(categories, 0);
+  const best = projectedGrade(categories, 100);
+  if (worst === null || best === null) return "unknown";
+  if (worst >= targetGrade) return "secured";
+  if (best < targetGrade) return "at-risk";
+  return "on-track";
+}
+
 export function letterFor(grade: number): string {
   if (grade >= 97) return "A+";
   if (grade >= 93) return "A";

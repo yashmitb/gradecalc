@@ -4,10 +4,12 @@ import * as React from "react";
 import { animate, motion } from "framer-motion";
 import { ArrowLeft, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { Button, Card, GlassPanel, Input, Label, Pill } from "./ui";
+import { CategoryBreakdown, GradeProgressBar, StatusBadge } from "./Visualizations";
 import { springs } from "@/lib/springs";
 import type { Category, Course } from "@/lib/types";
 import { LETTER_TARGETS } from "@/lib/types";
 import {
+  courseStatus,
   currentGrade,
   fmt,
   letterFor,
@@ -34,7 +36,9 @@ export function CourseDetail({
 
   const ungraded = cats.filter((c) => c.score === null);
   const [targetCatId, setTargetCatId] = React.useState<string>("");
-  const [targetGrade, setTargetGrade] = React.useState<number>(90);
+  const targetGrade = course.targetGrade ?? 90;
+  const setTargetGrade = (v: number) => onChange({ targetGrade: v });
+  const status = courseStatus(cats, targetGrade);
 
   React.useEffect(() => {
     const stillValid = cats.some((c) => c.id === targetCatId);
@@ -96,7 +100,7 @@ export function CourseDetail({
           placeholder="Course name"
           aria-label="Course name"
         />
-        <div className="mt-3 flex items-baseline gap-3">
+        <div className="mt-3 flex flex-wrap items-baseline gap-3">
           <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
             Current
           </span>
@@ -111,8 +115,25 @@ export function CourseDetail({
               {letterFor(cur)}
             </span>
           )}
+          {cur !== null && <StatusBadge status={status} />}
         </div>
+
+        {cur !== null && (
+          <div className="mt-5">
+            <GradeProgressBar current={cur} target={targetGrade} status={status} />
+          </div>
+        )}
       </Card>
+
+      {/* Category breakdown */}
+      {cats.length > 0 && (
+        <Card className="mb-6 p-6">
+          <div className="mb-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Category breakdown
+          </div>
+          <CategoryBreakdown categories={cats} />
+        </Card>
+      )}
 
       {/* Categories */}
       <Card className="overflow-hidden">

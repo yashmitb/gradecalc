@@ -15,11 +15,13 @@ import { ApiKeyDialog } from "@/components/ApiKeyDialog";
 import { CourseDetail } from "@/components/CourseDetail";
 import { Welcome } from "@/components/Welcome";
 import { GitHubBadge } from "@/components/GitHubBadge";
+import { StatusBadge } from "@/components/Visualizations";
 import { useCourses } from "@/lib/useCourses";
 import { useApiKey } from "@/lib/useApiKey";
 import { useOnboarding } from "@/lib/useOnboarding";
 import { springs, fadeUp } from "@/lib/springs";
 import {
+  courseStatus,
   currentGrade,
   emptyCourse,
   fmt,
@@ -156,6 +158,7 @@ export default function Home() {
               <EmptyState onAdd={handleAddManual} />
             ) : (
               <>
+                <DashboardSummary courses={courses} />
                 <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Your courses
                 </div>
@@ -328,6 +331,7 @@ function CourseTile({
   const cur = currentGrade(course.categories);
   const remaining = course.categories.filter((c) => c.score === null).length;
   const tw = totalWeight(course.categories);
+  const status = courseStatus(course.categories, course.targetGrade ?? 90);
 
   return (
     <motion.button
@@ -349,11 +353,14 @@ function CourseTile({
             <span className="text-xl font-bold text-muted">%</span>
           )}
         </div>
-        {cur !== null && (
-          <span className="rounded-full border border-accent-soft bg-accent-dim px-2.5 py-0.5 text-sm font-bold text-accent">
-            {letterFor(cur)}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {cur !== null && <StatusBadge status={status} />}
+          {cur !== null && (
+            <span className="rounded-full border border-accent-soft bg-accent-dim px-2.5 py-0.5 text-sm font-bold text-accent">
+              {letterFor(cur)}
+            </span>
+          )}
+        </div>
       </div>
       <div className="flex w-full items-center gap-2 text-xs text-muted">
         <span>{course.categories.length} categories</span>
@@ -371,6 +378,85 @@ function CourseTile({
         )}
       </div>
     </motion.button>
+  );
+}
+
+/**
+ * At-a-glance stats across all courses: how many are tracked, average
+ * current grade, and a breakdown of secured / on-track / at-risk counts.
+ */
+function DashboardSummary({ courses }: { courses: Course[] }) {
+  const graded = courses
+    .map((c) => currentGrade(c.categories))
+    .filter((g): g is number => g !== null);
+
+  const avg =
+    graded.length > 0
+      ? graded.reduce((sum, g) => sum + g, 0) / graded.length
+      : null;
+
+  const statuses = courses.map((c) =>
+    courseStatus(c.categories, c.targetGrade ?? 90),
+  );
+  const counts = {
+    secured: statuses.filter((s) => s === "secured").length,
+    "on-track": statuses.filter((s) => s === "on-track").length,
+    "at-risk": statuses.filter((s) => s === "at-risk").length,
+  };
+
+  const stats: { label: string; value: string; sub?: React.ReactNode }[] = [
+    {
+      label: "Courses",
+      value: String(courses.length),
+    },
+    {
+      label: "Average grade",
+      value: avg !== null ? `${fmt(avg)}%` : "—",
+      sub: avg !== null ? letterFor(avg) : undefined,
+    },
+    {
+      label: "Secured",
+      value: String(counts.secured),
+      sub: <StatusBadge status="secured" />,
+    },
+    {
+      label: "On track",
+      value: String(counts["on-track"]),
+      sub: <StatusBadge status="on-track" />,
+    },
+    {
+      label: "At risk",
+      value: String(counts["at-risk"]),
+      sub: <StatusBadge status="at-risk" />,
+    },
+  ];
+
+  return (
+    <motion.div
+      className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-5"
+      initial="hidden"
+      animate="show"
+      variants={{
+        hidden: {},
+        show: { transition: { staggerChildren: 0.05 } },
+      }}
+    >
+      {stats.map((s) => (
+        <motion.div
+          key={s.label}
+          variants={fadeUp}
+          className="rounded-2xl border border-border bg-surface p-4"
+        >
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            {s.label}
+          </div>
+          <div className="tnum mt-2 text-2xl font-extrabold tracking-tight">
+            {s.value}
+          </div>
+          {s.sub && <div className="mt-2">{s.sub}</div>}
+        </motion.div>
+      ))}
+    </motion.div>
   );
 }
 

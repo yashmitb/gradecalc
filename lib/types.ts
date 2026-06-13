@@ -12,6 +12,8 @@ export type Course = {
   id: string;
   name: string;
   categories: Category[];
+  /** The grade (%) the user is aiming for in this course. Defaults to 90. */
+  targetGrade?: number;
 };
 
 /** Something the AI couldn't resolve confidently and needs the user to confirm. */
