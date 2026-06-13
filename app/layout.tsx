@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -12,6 +12,17 @@ export const metadata: Metadata = {
   title: "GradeHQ — What do you need on the final?",
   description:
     "Figure out exactly what you need on the final to land the grade you want. Free, private, no sign-up.",
+  // Lets iOS Safari "Add to Home Screen" launch GradeHQ full-screen with the
+  // right title and a dark status bar.
+  appleWebApp: {
+    capable: true,
+    title: "GradeHQ",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({
