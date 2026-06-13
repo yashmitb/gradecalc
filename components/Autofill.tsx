@@ -2,8 +2,15 @@
 
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, Sparkles, TriangleAlert, UploadCloud, X } from "lucide-react";
-import { Button, GlassPanel } from "./ui";
+import {
+  Check,
+  Loader2,
+  Sparkles,
+  TriangleAlert,
+  UploadCloud,
+  X,
+} from "lucide-react";
+import { Button, GlassPanel, Input } from "./ui";
 import { springs } from "@/lib/springs";
 import type { ParsedCourse } from "@/lib/types";
 
@@ -12,12 +19,15 @@ export function Autofill({
   onClose,
   onParsed,
   apiKey,
+  onSaveKey,
   onNeedKey,
 }: {
   open: boolean;
   onClose: () => void;
   onParsed: (parsed: ParsedCourse) => void;
   apiKey: string;
+  /** Persist a key the user pastes in after the shared server is busy. */
+  onSaveKey: (key: string) => void;
   onNeedKey: () => void;
 }) {
   const [files, setFiles] = React.useState<File[]>([]);
@@ -25,6 +35,10 @@ export function Autofill({
   const [error, setError] = React.useState<string | null>(null);
   const [drag, setDrag] = React.useState(false);
   const [pending, setPending] = React.useState<ParsedCourse | null>(null);
+  // Shown when the shared free key hits its daily limit — lets the user
+  // paste their own key inline and retry without leaving this dialog.
+  const [serverBusy, setServerBusy] = React.useState(false);
+  const [ownKey, setOwnKey] = React.useState("");
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -33,6 +47,8 @@ export function Autofill({
       setError(null);
       setBusy(false);
       setPending(null);
+      setServerBusy(false);
+      setOwnKey("");
     }
   }, [open]);
 
@@ -48,17 +64,23 @@ export function Autofill({
     setFiles((prev) => [...prev, ...Array.from(list)].slice(0, 4));
   };
 
-  const submit = async () => {
+  const submit = async (keyOverride?: string) => {
     if (files.length === 0) return;
+    const effectiveKey = keyOverride ?? apiKey;
     setBusy(true);
     setError(null);
     try {
       const body = new FormData();
       files.forEach((f) => body.append("files", f));
-      if (apiKey) body.append("apiKey", apiKey);
+      if (effectiveKey) body.append("apiKey", effectiveKey);
       const res = await fetch("/api/parse", { method: "POST", body });
       const data = await res.json();
       if (!res.ok) {
+        if (data.code === "server-busy") {
+          setError(data.error ?? "The shared free server is busy right now.");
+          setServerBusy(true);
+          return;
+        }
         if (data.code === "no-key" || data.code === "bad-key") {
           setError(data.error ?? "An API key is required.");
           onNeedKey();
@@ -67,6 +89,7 @@ export function Autofill({
         setError(data.error ?? "Something went wrong.");
         return;
       }
+      setServerBusy(false);
       const parsed = data as ParsedCourse;
       if (parsed.flags && parsed.flags.length > 0) {
         // Hold off on importing — let the user see what we couldn't
@@ -80,6 +103,14 @@ export function Autofill({
     } finally {
       setBusy(false);
     }
+  };
+
+  const useOwnKeyAndRetry = () => {
+    const trimmed = ownKey.trim();
+    if (!trimmed) return;
+    onSaveKey(trimmed);
+    setServerBusy(false);
+    submit(trimmed);
   };
 
   return (
@@ -241,13 +272,53 @@ export function Autofill({
                   )}
 
                   {error && (
-                    <p
+                    <div
                       role="alert"
                       className="mt-3 flex items-start gap-2 rounded-xl border border-accent-soft bg-accent-dim px-3 py-2 text-sm text-foreground"
                     >
                       <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                      {error}
-                    </p>
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  {serverBusy && (
+                    <div className="mt-3 rounded-xl border border-border bg-surface p-3">
+                      <p className="text-xs leading-relaxed text-muted">
+                        Paste your own free Gemini key to continue now — it&apos;s
+                        saved only in this browser. Or close this and{" "}
+                        <span className="font-semibold text-foreground">
+                          add the course manually
+                        </span>{" "}
+                        instead.
+                      </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <Input
+                          type="password"
+                          autoComplete="off"
+                          placeholder="AIza…"
+                          value={ownKey}
+                          onChange={(e) => setOwnKey(e.target.value)}
+                          className="h-10"
+                          aria-label="Your Gemini API key"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={useOwnKeyAndRetry}
+                          disabled={busy || !ownKey.trim()}
+                        >
+                          <Check className="h-4 w-4" />
+                          Save &amp; retry
+                        </Button>
+                      </div>
+                      <a
+                        href="https://aistudio.google.com/apikey"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-block text-xs font-medium text-accent underline underline-offset-4 hover:no-underline"
+                      >
+                        Get a free key at Google AI Studio
+                      </a>
+                    </div>
                   )}
 
                   <button
@@ -257,7 +328,7 @@ export function Autofill({
                     <span>
                       {apiKey
                         ? "Using your own Gemini key — stored only in this browser."
-                        : "Runs on Gemini. Add your own free key →"}
+                        : "Running on a shared free key. Add your own →"}
                     </span>
                     <span className="font-semibold">
                       {apiKey ? "Change" : "Add key"}
@@ -268,7 +339,7 @@ export function Autofill({
                     <Button variant="ghost" onClick={() => !busy && onClose()}>
                       Cancel
                     </Button>
-                    <Button onClick={submit} disabled={busy || files.length === 0}>
+                    <Button onClick={() => submit()} disabled={busy || files.length === 0}>
                       {busy ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />

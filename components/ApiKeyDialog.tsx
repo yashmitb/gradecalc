@@ -2,14 +2,7 @@
 
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Check,
-  ExternalLink,
-  KeyRound,
-  Lock,
-  TriangleAlert,
-  X,
-} from "lucide-react";
+import { Check, ExternalLink, KeyRound, Lock, X } from "lucide-react";
 import { Button, GlassPanel, Input, Label } from "./ui";
 import { springs } from "@/lib/springs";
 
@@ -19,16 +12,12 @@ export function ApiKeyDialog({
   onClose,
   onSave,
   onClear,
-  notice,
 }: {
   open: boolean;
   initialKey: string;
   onClose: () => void;
   onSave: (key: string) => void;
   onClear: () => void;
-  /** Optional banner shown above the form, e.g. when the user was sent
-   * here because a feature needs a key first. */
-  notice?: string;
 }) {
   const [value, setValue] = React.useState(initialKey);
 
@@ -83,19 +72,10 @@ export function ApiKeyDialog({
                 </h2>
               </div>
               <p className="mb-5 text-sm leading-relaxed text-muted">
-                Auto-fill uses Google&apos;s Gemini. Add your own free key so
-                requests run on your account. It&apos;s a one-time step.
+                Auto-fill runs on a shared free key by default. Add your own
+                if the shared one ever hits its daily limit, or if you just
+                want your requests to run on your own account.
               </p>
-
-              {notice && (
-                <p
-                  role="alert"
-                  className="mb-4 flex items-start gap-2 rounded-xl border border-accent-soft bg-accent-dim px-3 py-2 text-sm text-foreground"
-                >
-                  <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                  {notice}
-                </p>
-              )}
 
               <Label htmlFor="gemini-key">API key</Label>
               <Input

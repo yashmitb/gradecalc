@@ -133,11 +133,14 @@ export async function POST(req: Request) {
   }
 
   // Prefer the user's own key (sent from their browser, used once, never
-  // stored). Fall back to a server-configured key for local/self-hosted use.
+  // stored). Fall back to a shared server-configured key so auto-fill works
+  // out of the box for everyone, with no setup required.
   const userKey = String(form.get("apiKey") ?? "")
     .trim()
     .slice(0, 200);
-  const apiKey = userKey || process.env.GEMINI_API_KEY;
+  const sharedKey = process.env.GEMINI_API_KEY;
+  const apiKey = userKey || sharedKey;
+  const usingSharedKey = !userKey && !!sharedKey;
   if (!apiKey) {
     return Response.json(
       {
@@ -300,6 +303,20 @@ export async function POST(req: Request) {
       status === 429 ||
       /resource_exhausted|quota|rate limit|429/i.test(msg);
     if (isRateLimit) {
+      // The shared community key hit its daily free-tier cap — this isn't
+      // the user's problem to "wait out". Offer them a clean way to keep
+      // going: paste their own free key, or fall back to manual entry.
+      if (usingSharedKey) {
+        return Response.json(
+          {
+            code: "server-busy",
+            error:
+              "Our shared free AI helper hit today's limit (it happens during finals week!). Add your own free Gemini key to keep using auto-fill, or enter your grades manually.",
+          },
+          { status: 503 },
+        );
+      }
+
       const m = msg.match(/retry in ([\d.]+)s/i);
       const secs = m ? Math.ceil(parseFloat(m[1])) : null;
       const wait = secs ? ` Try again in about ${secs}s.` : "";

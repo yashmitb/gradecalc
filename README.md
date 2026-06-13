@@ -33,10 +33,13 @@ npm run dev
 
 Open http://localhost:3000.
 
-The calculator works fully with **zero setup**. AI auto-fill is the only part
-that needs a key.
+The calculator works fully with **zero setup**.
 
-### Enable AI auto-fill (free, optional)
+### AI auto-fill (free)
+
+If you (the deployer) set a `GEMINI_API_KEY`, auto-fill works out of the box
+for every visitor — no key required on their end. Google's free tier gives
+1,500 requests/day with no credit card, which easily covers a class or campus.
 
 1. Get a free Gemini API key (no credit card) at
    <https://aistudio.google.com/apikey>.
@@ -47,9 +50,12 @@ that needs a key.
    Then set `GEMINI_API_KEY=your_key_here` in `.env.local`.
 3. Restart `npm run dev`.
 
-Alternatively, users can add their own key in the app (saved only in their
-browser) — it's sent once per auto-fill request and never stored on the
-server.
+If that shared key ever hits its daily limit (e.g. finals week traffic), the
+app degrades gracefully: it tells the user the shared server is busy and lets
+them either paste their own free Gemini key (saved only in their browser,
+sent once per request, never stored server-side) or enter grades manually.
+Auto-fill also works with **no `GEMINI_API_KEY` set at all** — users just add
+their own key from the start.
 
 ## Deploy free on Vercel
 
