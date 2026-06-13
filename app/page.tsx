@@ -263,9 +263,6 @@ function NavBar({
           }
         >
           <span className="relative flex h-2 w-2 shrink-0">
-            {!hasKey && (
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-muted/60" />
-            )}
             <span
               className={`relative inline-flex h-2 w-2 rounded-full transition-colors ${
                 hasKey ? "bg-accent" : "bg-muted"
@@ -274,7 +271,7 @@ function NavBar({
           </span>
           <KeyRound className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">
-            {hasKey ? "Key connected" : "Add API key"}
+            {hasKey ? "Your key connected" : "Free key available"}
           </span>
         </Button>
       </div>
