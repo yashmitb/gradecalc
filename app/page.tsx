@@ -7,7 +7,6 @@ import {
   CircleHelp,
   KeyRound,
   Plus,
-  Scale,
   Sparkles,
 } from "lucide-react";
 import { Button, Card } from "@/components/ui";
@@ -235,9 +234,13 @@ function NavBar({
         className="flex items-center gap-2.5 cursor-pointer"
         aria-label="GradeHQ home"
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-dim text-accent">
-          <Scale className="h-4 w-4" />
-        </span>
+        <img
+          src="/logo-32.png"
+          alt=""
+          className="h-7 w-7 rounded-[7px]"
+          width={32}
+          height={32}
+        />
         <span className="text-base font-extrabold tracking-tight">
           GradeHQ
         </span>
