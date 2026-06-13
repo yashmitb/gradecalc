@@ -87,3 +87,25 @@ lib/
   springs.ts        — shared Framer Motion spring presets
   useCourses.ts / useApiKey.ts / useOnboarding.ts — localStorage-backed hooks
 ```
+
+## Contributing
+
+PRs and issues are welcome!
+
+1. Fork the repo and clone your fork.
+2. `npm install` then `npm run dev` to run it locally.
+3. Make your change. Keep it dependency-light and consistent with the
+   existing style (Tailwind utility classes, Framer Motion springs from
+   `lib/springs.ts`, shared primitives from `components/ui.tsx`).
+4. Run `npx tsc --noEmit` and `npm run build` to make sure everything still
+   type-checks and builds.
+5. Open a pull request describing what changed and why.
+
+Good places to start: UI polish, accessibility fixes, new letter-grade
+scales/locales, or improvements to the AI auto-fill prompt/parsing in
+`app/api/parse/route.ts`.
+
+## License
+
+[MIT](./LICENSE) — do whatever you want with it, just keep the license
+notice.
