@@ -7,7 +7,9 @@ import {
   CircleHelp,
   KeyRound,
   Plus,
+  Search,
   Sparkles,
+  X,
 } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { Autofill } from "@/components/Autofill";
@@ -175,26 +177,7 @@ export default function Home() {
                 <DashboardSummary courses={courses} />
                 <GPAPanel courses={courses} />
                 <WhatIfPanel courses={courses} />
-                <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                  Your courses
-                </div>
-                <motion.div
-                  className="grid gap-4 sm:grid-cols-2"
-                  initial="hidden"
-                  animate="show"
-                  variants={{
-                    hidden: {},
-                    show: { transition: { staggerChildren: 0.07 } },
-                  }}
-                >
-                  {courses.map((course) => (
-                    <CourseTile
-                      key={course.id}
-                      course={course}
-                      onOpen={() => setActiveId(course.id)}
-                    />
-                  ))}
-                </motion.div>
+                <CoursesSection courses={courses} onOpen={setActiveId} />
               </>
             )}
           </main>
@@ -334,6 +317,81 @@ function NavBar({
         </Button>
       </div>
     </motion.header>
+  );
+}
+
+/**
+ * The "Your courses" grid, with a name search that appears once the list is
+ * long enough to be worth filtering. The entrance stagger only plays on first
+ * mount; filtering reconciles in place without re-animating kept tiles.
+ */
+function CoursesSection({
+  courses,
+  onOpen,
+}: {
+  courses: Course[];
+  onOpen: (id: string) => void;
+}) {
+  const [query, setQuery] = React.useState("");
+  const q = query.trim().toLowerCase();
+  const visible = q
+    ? courses.filter((c) => c.name.toLowerCase().includes(q))
+    : courses;
+  const showSearch = courses.length >= 4;
+
+  return (
+    <>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+          Your courses
+        </span>
+        {showSearch && (
+          <div className="relative w-44 sm:w-56">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search courses"
+              aria-label="Search courses"
+              className="h-9 w-full rounded-lg border border-border bg-surface pl-9 pr-8 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent-dim"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted transition-colors hover:text-foreground cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {visible.length === 0 ? (
+        <Card className="p-6 text-sm leading-relaxed text-muted">
+          {`No courses match “${query}”.`}
+        </Card>
+      ) : (
+        <motion.div
+          className="grid gap-4 sm:grid-cols-2"
+          initial="hidden"
+          animate="show"
+          variants={{
+            hidden: {},
+            show: { transition: { staggerChildren: 0.07 } },
+          }}
+        >
+          {visible.map((course) => (
+            <CourseTile
+              key={course.id}
+              course={course}
+              onOpen={() => onOpen(course.id)}
+            />
+          ))}
+        </motion.div>
+      )}
+    </>
   );
 }
 
