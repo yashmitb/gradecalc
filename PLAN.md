@@ -165,4 +165,18 @@ what's in flight, and any decisions made along the way.
             scores); auto-detecting & storing a custom %→letter→GPA grading
             scale (Phase 2 intentionally ships a fixed scale — integration
             unclear, revisit with the user).
-- [ ] Phase 5: Personalization / UX
+- [~] Phase 5: Personalization / UX (partial — 3 of 4 shipped)
+      - [x] Course search/filter — name search on the dashboard once you have
+            4+ courses, with clear button + empty state.
+      - [x] Custom course colors — per-course accent (6-color curated palette)
+            that re-themes that course's accent system via scoped CSS vars
+            (letter badge, progress bar, GPA badge, etc.), plus a color dot on
+            the dashboard tile. Semantic status colors stay independent.
+      - [x] PWA / install — web manifest + maskable icons + iOS meta so
+            GradeHQ installs to a home screen and launches standalone.
+            (Service-worker offline caching deferred — stale-cache risk.)
+      - [ ] DEFERRED (left for review per autonomous-run guardrails):
+            light/dark theme toggle. The whole design system (glass, specular,
+            ambient glow, accent, grid) is tuned for dark; a light theme is a
+            large design decision with high cross-app visual-bug risk — better
+            to design it deliberately with the user than guess.

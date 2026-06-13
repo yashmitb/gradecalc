@@ -18,6 +18,8 @@ export type Course = {
   credits?: number;
   /** Whether this course counts toward GPA (false for pass/fail, audit, etc). Defaults to true. */
   includeInGPA?: boolean;
+  /** Accent color key (see lib/colors.ts). Defaults to the app green. */
+  color?: string;
 };
 
 /** Something the AI couldn't resolve confidently and needs the user to confirm. */

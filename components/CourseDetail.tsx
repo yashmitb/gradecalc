@@ -18,6 +18,12 @@ import {
   uid,
 } from "@/lib/grades";
 import { DEFAULT_CREDITS, effectiveGrade, fmtGPA, gpaPointsFor } from "@/lib/gpa";
+import {
+  COURSE_COLORS,
+  DEFAULT_COURSE_COLOR,
+  accentStyle,
+} from "@/lib/colors";
+import { cn } from "@/lib/cn";
 
 export function CourseDetail({
   course,
@@ -86,6 +92,7 @@ export function CourseDetail({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={springs.smooth}
+      style={accentStyle(course.color)}
       className="mx-auto w-full max-w-3xl"
     >
       <div className="mb-8 flex items-center justify-between gap-3">
@@ -167,6 +174,33 @@ export function CourseDetail({
             />
             Count toward GPA
           </label>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+              Color
+            </span>
+            <div className="flex items-center gap-1.5">
+              {COURSE_COLORS.map((c) => {
+                const selected =
+                  (course.color ?? DEFAULT_COURSE_COLOR) === c.key;
+                return (
+                  <motion.button
+                    key={c.key}
+                    onClick={() => onChange({ color: c.key })}
+                    whileHover={{ scale: 1.15 }}
+                    whileTap={{ scale: 0.9 }}
+                    transition={springs.snappy}
+                    aria-label={`${c.label} accent`}
+                    aria-pressed={selected}
+                    className={cn(
+                      "h-5 w-5 cursor-pointer rounded-full ring-2 ring-offset-2 ring-offset-surface transition-shadow",
+                      selected ? "ring-foreground" : "ring-transparent",
+                    )}
+                    style={{ backgroundColor: c.base }}
+                  />
+                );
+              })}
+            </div>
+          </div>
           {gpaPoints !== null && includeInGPA && (
             <span className="tnum ml-auto rounded-full border border-accent-soft bg-accent-dim px-2.5 py-1 text-xs font-bold text-accent">
               {fmtGPA(gpaPoints)} GPA pts

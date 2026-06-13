@@ -20,6 +20,7 @@ import { GitHubBadge } from "@/components/GitHubBadge";
 import { StatusBadge } from "@/components/Visualizations";
 import { GPAPanel } from "@/components/GPAPanel";
 import { WhatIfPanel } from "@/components/WhatIfPanel";
+import { accentStyle, courseColorBase } from "@/lib/colors";
 import { useCourses } from "@/lib/useCourses";
 import { useApiKey } from "@/lib/useApiKey";
 import { useOnboarding } from "@/lib/useOnboarding";
@@ -414,10 +415,18 @@ function CourseTile({
       whileTap={{ scale: 0.98 }}
       transition={springs.bouncy}
       onClick={onOpen}
+      style={accentStyle(course.color)}
       className="group flex flex-col items-start gap-6 rounded-2xl border border-border bg-surface p-5 text-left cursor-pointer transition-colors hover:bg-surface-2 hover:border-white/10"
     >
       <div className="flex w-full items-start justify-between gap-2">
-        <h3 className="font-bold tracking-tight">{course.name}</h3>
+        <h3 className="flex min-w-0 items-center gap-2 font-bold tracking-tight">
+          <span
+            aria-hidden
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: courseColorBase(course.color) }}
+          />
+          <span className="truncate">{course.name}</span>
+        </h3>
         <ArrowRight className="h-4 w-4 shrink-0 text-muted transition-transform group-hover:translate-x-1 group-hover:text-accent" />
       </div>
       <div className="flex w-full items-end justify-between">
