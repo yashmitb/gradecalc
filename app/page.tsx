@@ -235,7 +235,7 @@ function NavBar({
         aria-label="GradeHQ home"
       >
         <img
-          src="/logo-32.png"
+          src="/logo.svg"
           alt=""
           className="h-7 w-7 rounded-[7px]"
           width={32}
