@@ -143,6 +143,9 @@ what's in flight, and any decisions made along the way.
       GPA" toggle, GPA points badge, semester GPA rollup, optional prior-GPA
       blending into a cumulative GPA, and a "what GPA do I need this
       semester" solver (locked-in / impossible / target value).
-- [ ] Phase 3: GPA What-If Sliders
+- [x] Phase 3: GPA What-If Sliders — per-course "hypothetical final grade"
+      sliders (accent-styled track + thumb) that live-update each course's
+      letter/GPA points plus the projected semester and cumulative GPA, without
+      touching real category scores. Reset clears all overrides.
 - [ ] Phase 4: AI / Auto-fill Enhancements
 - [ ] Phase 5: Personalization / UX

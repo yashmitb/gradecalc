@@ -127,6 +127,54 @@ body::after {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
   }
+
+  /* What-if grade sliders: thin filled track + accent thumb */
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-border);
+    outline: none;
+    cursor: pointer;
+    touch-action: none;
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    border: 3px solid var(--color-bg);
+    box-shadow: 0 0 0 1px var(--color-accent-soft);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .slider::-webkit-slider-thumb:hover,
+  .slider:active::-webkit-slider-thumb {
+    transform: scale(1.2);
+  }
+  .slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    border: 3px solid var(--color-bg);
+    box-shadow: 0 0 0 1px var(--color-accent-soft);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .slider::-moz-range-thumb:hover,
+  .slider:active::-moz-range-thumb {
+    transform: scale(1.2);
+  }
+  .slider::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: transparent;
+  }
 }
 
 ::-webkit-scrollbar {

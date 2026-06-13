@@ -56,10 +56,22 @@ export type CourseGPA = {
   counted: boolean;
 };
 
-export function courseGPAs(courses: Course[]): CourseGPA[] {
+/**
+ * Map of course id -> a hypothetical "what-if" final grade (0-100) that
+ * overrides `effectiveGrade()` for that course. Used by the what-if slider
+ * scenario tool to preview semester/cumulative GPA impact without touching
+ * real category scores.
+ */
+export type GradeOverrides = Record<string, number>;
+
+export function courseGPAs(
+  courses: Course[],
+  overrides?: GradeOverrides,
+): CourseGPA[] {
   return courses.map((course) => {
     const credits = course.credits ?? DEFAULT_CREDITS;
-    const grade = effectiveGrade(course);
+    const override = overrides?.[course.id];
+    const grade = override !== undefined ? override : effectiveGrade(course);
     const points = grade !== null ? gpaPointsFor(grade) : null;
     const counted = (course.includeInGPA ?? true) && points !== null && credits > 0;
     return { course, credits, grade, points, counted };
@@ -73,8 +85,11 @@ export type SemesterGPA = {
   excluded: number;
 };
 
-export function semesterGPA(courses: Course[]): SemesterGPA {
-  const all = courseGPAs(courses);
+export function semesterGPA(
+  courses: Course[],
+  overrides?: GradeOverrides,
+): SemesterGPA {
+  const all = courseGPAs(courses, overrides);
   const included = all.filter((c) => c.counted);
   const credits = included.reduce((sum, c) => sum + c.credits, 0);
   const excluded = all.length - included.length;

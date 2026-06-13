@@ -17,6 +17,7 @@ import { Welcome } from "@/components/Welcome";
 import { GitHubBadge } from "@/components/GitHubBadge";
 import { StatusBadge } from "@/components/Visualizations";
 import { GPAPanel } from "@/components/GPAPanel";
+import { WhatIfPanel } from "@/components/WhatIfPanel";
 import { useCourses } from "@/lib/useCourses";
 import { useApiKey } from "@/lib/useApiKey";
 import { useOnboarding } from "@/lib/useOnboarding";
@@ -161,6 +162,7 @@ export default function Home() {
               <>
                 <DashboardSummary courses={courses} />
                 <GPAPanel courses={courses} />
+                <WhatIfPanel courses={courses} />
                 <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Your courses
                 </div>
