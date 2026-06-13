@@ -186,3 +186,13 @@ what's in flight, and any decisions made along the way.
       pattern remains). Fixed the course-title overflow: the name is now an
       auto-growing textarea that wraps long titles ("MUS 1 — Intro to Music
       Theory and Composition") instead of clipping on narrow screens.
+- [x] UI declutter + clarity pass —
+      • Faster extraction: capped the Gemini thinking budget (was unbounded)
+        so a parse now takes ~3-5s instead of 8-15s; tightened the system
+        prompt; normalized whitespace in extracted names/categories.
+      • Slimmer dashboard: the five summary cards became one compact strip
+        (count · avg · status chips), courses now lead the page, and the GPA
+        calculator + what-if tools sit below a divider as secondary tools.
+        Lightened the GPA panel (borderless stats, no nested boxes).
+      • Reusable InfoTip ("i") with viewport-clamped tooltips on the confusing
+        bits: GPA projection, what-if scenarios, units, count-toward-GPA.

@@ -33,6 +33,7 @@ import {
   letterFor,
   totalWeight,
   uid,
+  type CourseStatus,
 } from "@/lib/grades";
 import type { Course, ParsedCourse } from "@/lib/types";
 
@@ -176,9 +177,11 @@ export default function Home() {
             ) : (
               <>
                 <DashboardSummary courses={courses} />
-                <GPAPanel courses={courses} />
-                <WhatIfPanel courses={courses} />
                 <CoursesSection courses={courses} onOpen={setActiveId} />
+                <div className="mt-14 border-t border-border pt-10">
+                  <GPAPanel courses={courses} />
+                  <WhatIfPanel courses={courses} />
+                </div>
               </>
             )}
           </main>
@@ -465,8 +468,9 @@ function CourseTile({
 }
 
 /**
- * At-a-glance stats across all courses: how many are tracked, average
- * current grade, and a breakdown of secured / on-track / at-risk counts.
+ * One slim at-a-glance strip: course count, average grade, and compact
+ * status chips — replaces the old five-card grid so the dashboard leads with
+ * the courses, not a wall of boxes.
  */
 function DashboardSummary({ courses }: { courses: Course[] }) {
   const graded = courses
@@ -481,65 +485,45 @@ function DashboardSummary({ courses }: { courses: Course[] }) {
   const statuses = courses.map((c) =>
     courseStatus(c.categories, c.targetGrade ?? 90),
   );
-  const counts = {
-    secured: statuses.filter((s) => s === "secured").length,
-    "on-track": statuses.filter((s) => s === "on-track").length,
-    "at-risk": statuses.filter((s) => s === "at-risk").length,
-  };
-
-  const stats: { label: string; value: string; sub?: React.ReactNode }[] = [
-    {
-      label: "Courses",
-      value: String(courses.length),
-    },
-    {
-      label: "Average grade",
-      value: avg !== null ? `${fmt(avg)}%` : "—",
-      sub: avg !== null ? letterFor(avg) : undefined,
-    },
-    {
-      label: "Secured",
-      value: String(counts.secured),
-      sub: <StatusBadge status="secured" />,
-    },
-    {
-      label: "On track",
-      value: String(counts["on-track"]),
-      sub: <StatusBadge status="on-track" />,
-    },
-    {
-      label: "At risk",
-      value: String(counts["at-risk"]),
-      sub: <StatusBadge status="at-risk" />,
-    },
-  ];
+  const chips = (
+    [
+      ["secured", statuses.filter((s) => s === "secured").length],
+      ["on-track", statuses.filter((s) => s === "on-track").length],
+      ["at-risk", statuses.filter((s) => s === "at-risk").length],
+    ] as [CourseStatus, number][]
+  ).filter(([, n]) => n > 0);
 
   return (
     <motion.div
-      className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-5"
-      initial="hidden"
-      animate="show"
-      variants={{
-        hidden: {},
-        show: { transition: { staggerChildren: 0.05 } },
-      }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={springs.smooth}
+      className="mb-8 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-2xl border border-border bg-surface px-5 py-3.5"
     >
-      {stats.map((s) => (
-        <motion.div
-          key={s.label}
-          variants={fadeUp}
-          className="rounded-2xl border border-border bg-surface p-4"
-        >
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            {s.label}
-          </div>
-          <div className="tnum mt-2 text-2xl font-extrabold tracking-tight">
-            {s.value}
-          </div>
-          {s.sub && <div className="mt-2">{s.sub}</div>}
-        </motion.div>
-      ))}
+      <Metric value={String(courses.length)} label={courses.length === 1 ? "course" : "courses"} />
+      {avg !== null && (
+        <>
+          <span className="h-7 w-px bg-border" aria-hidden />
+          <Metric value={`${fmt(avg)}%`} label={`avg · ${letterFor(avg)}`} />
+        </>
+      )}
+      {chips.length > 0 && (
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {chips.map(([status, n]) => (
+            <StatusBadge key={status} status={status} count={n} />
+          ))}
+        </div>
+      )}
     </motion.div>
+  );
+}
+
+function Metric({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex items-baseline gap-1.5">
+      <span className="tnum text-xl font-extrabold tracking-tight">{value}</span>
+      <span className="text-sm text-muted">{label}</span>
+    </div>
   );
 }
 

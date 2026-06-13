@@ -159,9 +159,13 @@ const STATUS_CONFIG: Record<
 
 export function StatusBadge({
   status,
+  count,
   className,
 }: {
   status: CourseStatus;
+  /** When set, shows the number and hides the text label on small screens —
+   *  for compact summary chips like "✓ 2 Secured". */
+  count?: number;
   className?: string;
 }) {
   const { label, icon: Icon, className: tone } = STATUS_CONFIG[status];
@@ -174,7 +178,10 @@ export function StatusBadge({
       )}
     >
       <Icon className="h-3.5 w-3.5" />
-      {label}
+      {count !== undefined && <span className="tnum">{count}</span>}
+      <span className={count !== undefined ? "hidden sm:inline" : undefined}>
+        {label}
+      </span>
     </span>
   );
 }

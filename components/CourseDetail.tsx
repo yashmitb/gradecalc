@@ -5,6 +5,7 @@ import { animate, motion } from "framer-motion";
 import { ArrowLeft, Plus, RefreshCw, Trash2, TriangleAlert } from "lucide-react";
 import { Button, Card, GlassPanel, Input, Label, Pill } from "./ui";
 import { CategoryBreakdown, GradeProgressBar, StatusBadge } from "./Visualizations";
+import { InfoTip } from "./InfoTip";
 import { springs } from "@/lib/springs";
 import type { Category, Course } from "@/lib/types";
 import { LETTER_TARGETS } from "@/lib/types";
@@ -187,16 +188,26 @@ export function CourseDetail({
               className="h-9 w-16 px-2 text-center"
               aria-label="Credit units"
             />
-          </div>
-          <label className="flex cursor-pointer items-center gap-2 text-muted">
-            <input
-              type="checkbox"
-              checked={includeInGPA}
-              onChange={(e) => onChange({ includeInGPA: e.target.checked })}
-              className="h-4 w-4 cursor-pointer rounded border-border bg-surface accent-[var(--color-accent)]"
+            <InfoTip
+              align="start"
+              label="Credit hours for this course — used to weight it in your GPA."
             />
-            Count toward GPA
-          </label>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="flex cursor-pointer items-center gap-2 text-muted">
+              <input
+                type="checkbox"
+                checked={includeInGPA}
+                onChange={(e) => onChange({ includeInGPA: e.target.checked })}
+                className="h-4 w-4 cursor-pointer rounded border-border bg-surface accent-[var(--color-accent)]"
+              />
+              Count toward GPA
+            </label>
+            <InfoTip
+              align="start"
+              label="Turn this off for pass/fail or audited courses so they don't affect your GPA."
+            />
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
               Color

@@ -4,6 +4,7 @@ import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { Button, Card } from "./ui";
+import { InfoTip } from "./InfoTip";
 import { springs, fadeUp } from "@/lib/springs";
 import { fmt, letterFor } from "@/lib/grades";
 import {
@@ -62,6 +63,10 @@ export function WhatIfPanel({ courses }: { courses: Course[] }) {
           <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
             What-if scenarios
           </h2>
+          <InfoTip
+            align="start"
+            label="Drag any course to a hypothetical final grade to preview your semester and cumulative GPA. Your real grades aren't changed."
+          />
         </div>
         <button
           onClick={() => setOpen((v) => !v)}

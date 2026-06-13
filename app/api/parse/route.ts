@@ -47,57 +47,22 @@ function pruneHits() {
   }
 }
 
-const SYSTEM = `You extract a course's grade breakdown from a syllabus and/or screenshots of a grades page (e.g. Canvas, Gradescope).
+const SYSTEM = `You extract a course's grade breakdown from a syllabus and/or screenshots of a grades page (Canvas, Gradescope, etc.). Be accurate and never guess.
 
-Work in this order, every time — do not skip ahead to the gradebook before finishing Step 1:
-
-STEP 1 — Read the syllabus / grading-policy document(s) FIRST, if any are attached.
-From it, note:
-  - The graded categories and their weights as percentages.
-  - Any policy that changes how a category's score should be computed, e.g.:
-      • "drop the lowest N quizzes/homeworks" or similar drop policies
-      • opt-out, exemption, or "replace with X if higher" rules
-      • extra credit not reflected in a simple percentage
-      • a stated max-points / denominator for a category
-  Keep these rules in mind for Step 2 — they often mean a raw gradebook percentage
-  is NOT the student's real effective score for that category.
-
-STEP 2 — Read the gradebook screenshot(s) (Canvas, Gradescope, etc.) SECOND.
-For each category from Step 1, find the student's current score as a percentage.
-
-STEP 3 — Cross-reference Steps 1 and 2. Never guess. When something is ambiguous or
-conflicts, leave that category's score as null and add an entry to "flags"
-explaining exactly what you saw, so the user can confirm it themselves. Specifically:
-
-A. DUPLICATE ROWS — If the gradebook has more than one row that could map to the
-   same category (e.g. two "Quiz 3" entries with different scores, a regrade row
-   next to the original, etc.), do NOT pick one and do NOT average them. Set that
-   category's score to null and add a "flags" entry listing the category and the
-   conflicting values you saw, asking the user which one is correct. (Identical
-   duplicate rows with the same value are fine to merge silently.)
-
-B. OPT-OUT / DROP POLICIES — If the syllabus describes a drop-lowest, opt-out,
-   exemption, or "replace with higher score" policy that affects a category, do
-   NOT use the raw gradebook percentage for that category — it usually doesn't
-   reflect the policy. Set that category's score to null and add a "flags" entry
-   describing the policy you found and asking the user to enter their actual
-   effective score for that category.
-
-C. DENOMINATOR CONFLICTS — Prefer a syllabus- or Gradescope-stated max-points
-   value over whatever Canvas implies, if they differ. If two sources disagree
-   on a category's denominator and you can't tell which is authoritative, do NOT
-   compute a percentage from either. Set that category's score to null and add a
-   "flags" entry describing the conflicting totals you saw, asking the user to
-   confirm the right one.
+Process:
+1. If a syllabus / grading-policy document is attached, read it FIRST. Note the graded categories and their percentage weights, plus any policy that changes how a category's score is computed: drop-lowest rules, opt-out/exemptions, "replace with X if higher", extra credit, or a stated max-points denominator. These mean a raw gradebook percentage may NOT be the student's true score.
+2. Then read the gradebook screenshot(s). For each category, find the student's current score as a percentage.
+3. Cross-reference. Leave a category's score null and add a "flags" entry (the category name + exactly what you saw) instead of guessing whenever:
+   • Duplicate or conflicting rows could map to one category (two "Quiz 3"s, a regrade beside the original). Don't pick one and don't average — flag it. (Identical duplicate rows with the same value are fine to merge.)
+   • A drop / opt-out / replacement policy affects the category — the raw percentage likely ignores it. Flag and ask for the effective score.
+   • Two sources disagree on a denominator and you can't tell which is authoritative — flag instead of computing one.
 
 Return:
-- name: the course name or code (e.g. "CSE 100", "Organic Chemistry"). If unknown, use "Imported Course".
-- categories: the weighted grading categories. For each: a short name (e.g. "Homework", "Midterm", "Final", "Participation"), its weight as a percentage number (e.g. 20 for 20%), and the student's current score as a percentage if — and only if — you're confident it reflects their true standing under the syllabus's rules, otherwise null.
-- flags: a list of { category, reason } for anything you left null per Steps 3A-3C, or any other ambiguity worth a human glance. Empty array if nothing needs attention.
+- name: the course name or code (e.g. "CSE 100", "Organic Chemistry"); "Imported Course" if unknown.
+- categories: each with a short name (e.g. "Homework", "Midterm", "Final", "Participation"), its weight as a percentage number (convert fractions like 0.2 → 20), and the current score as a percentage — only if you're confident it reflects the student's true standing under the syllabus's rules, otherwise null.
+- flags: a list of { category, reason } for each item you left null above, or any other ambiguity worth a human glance. Empty array if nothing needs attention.
 
-Other rules:
-- Weights should be plain numbers that ideally sum to ~100. If the syllabus lists weights as fractions (0.2), convert to percent (20).
-- Do not invent categories that aren't present.`;
+Rules: weights are plain numbers that should sum to ~100. Never invent categories that aren't present.`;
 
 // Lets the client check (without hitting Gemini) whether a shared/free key is
 // configured on this deployment, so the UI can show the right key status.
@@ -208,10 +173,11 @@ export async function POST(req: Request) {
       config: {
         systemInstruction: SYSTEM,
         responseMimeType: "application/json",
-        // This task now involves cross-referencing the syllabus against the
-        // gradebook (drop policies, duplicate rows, denominators) — let the
-        // model think it through rather than forcing instant output.
-        thinkingConfig: { thinkingBudget: -1 },
+        // Cap the thinking budget instead of letting it run unbounded (-1).
+        // The structured schema does most of the heavy lifting, so a modest
+        // budget is plenty for the cross-referencing (drop policies, duplicate
+        // rows, denominators) while cutting extraction latency substantially.
+        thinkingConfig: { thinkingBudget: 1024 },
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -259,10 +225,15 @@ export async function POST(req: Request) {
       flags?: { category?: string; reason?: string }[];
     };
 
+    // Collapse any internal newlines / runs of whitespace the model may pull
+    // out of a multi-line heading, so names land clean (e.g. "CSE 100 — Data
+    // Structures" instead of "CSE 100\nData Structures").
+    const clean = (s: string) => s.replace(/\s+/g, " ").trim();
+
     const categories = (data.categories ?? [])
       .filter((c) => c && c.name)
       .map((c) => ({
-        name: String(c.name).slice(0, 40),
+        name: clean(String(c.name)).slice(0, 40),
         weight: Math.max(0, Math.round(Number(c.weight) || 0)),
         score:
           c.score === null || c.score === undefined || Number.isNaN(c.score)
@@ -291,7 +262,7 @@ export async function POST(req: Request) {
       }));
 
     return Response.json({
-      name: data.name?.trim() || "Imported Course",
+      name: clean(String(data.name ?? "")).slice(0, 80) || "Imported Course",
       categories,
       flags,
     });

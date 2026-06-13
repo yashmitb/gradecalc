@@ -4,6 +4,7 @@ import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, GraduationCap } from "lucide-react";
 import { Card, Input, Label } from "./ui";
+import { InfoTip } from "./InfoTip";
 import { springs, fadeUp } from "@/lib/springs";
 import {
   cumulativeGPA,
@@ -71,6 +72,10 @@ export function GPAPanel({ courses }: { courses: Course[] }) {
           <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
             GPA calculator
           </h2>
+          <InfoTip
+            align="start"
+            label="Semester GPA is projected from each course's current grade × its units, assuming ungraded work stays at your current average. Add your prior GPA and units below for a cumulative figure."
+          />
         </div>
         <button
           onClick={() => setSettingsOpen((v) => !v)}
@@ -89,7 +94,7 @@ export function GPAPanel({ courses }: { courses: Course[] }) {
       </div>
 
       <motion.div
-        className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3"
+        className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3"
         initial="hidden"
         animate="show"
         variants={{
@@ -182,14 +187,11 @@ function Stat({
   sub?: string;
 }) {
   return (
-    <motion.div
-      variants={fadeUp}
-      className="rounded-2xl border border-border bg-surface-2 p-4"
-    >
+    <motion.div variants={fadeUp}>
       <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
         {label}
       </div>
-      <div className="tnum mt-2 text-2xl font-extrabold tracking-tight">
+      <div className="tnum mt-1.5 text-2xl font-extrabold tracking-tight">
         {value}
       </div>
       {sub && <div className="mt-1 text-xs text-muted">{sub}</div>}
