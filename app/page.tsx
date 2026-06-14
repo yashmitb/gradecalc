@@ -24,7 +24,6 @@ import { GitHubBadge } from "@/components/GitHubBadge";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { StatusBadge } from "@/components/Visualizations";
 import { GPAPanel } from "@/components/GPAPanel";
-import { WhatIfPanel } from "@/components/WhatIfPanel";
 import { accentStyle, courseColorBase } from "@/lib/colors";
 import { useCourses } from "@/lib/useCourses";
 import { useApiKey } from "@/lib/useApiKey";
@@ -220,12 +219,6 @@ export default function Home() {
                         allCourses={courses}
                         system={terms.system}
                         profile={profile}
-                      />
-                      <WhatIfPanel
-                        courses={termCourses}
-                        allCourses={courses}
-                        profile={profile}
-                        system={terms.system}
                       />
                     </div>
                   </>
