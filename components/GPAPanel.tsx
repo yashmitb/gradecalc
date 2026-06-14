@@ -23,6 +23,7 @@ import {
   type GradeOverrides,
   type NeededGPAResult,
 } from "@/lib/gpa";
+import { gpaRange } from "@/lib/reality";
 import { termNoun, type TermSystem } from "@/lib/terms";
 import type { Profile } from "@/lib/useProfile";
 import type { Course } from "@/lib/types";
@@ -48,6 +49,7 @@ export function GPAPanel({
   const noun = termNoun(system);
   const sem = semesterGPA(termCourses);
   const allSem = semesterGPA(allCourses);
+  const range = gpaRange(termCourses);
 
   const hasPrior =
     profile.priorGPA !== null &&
@@ -126,6 +128,18 @@ export function GPAPanel({
           {`${sem.excluded} course${sem.excluded === 1 ? "" : "s"} not counted — no grade yet, or marked “don't count toward GPA”.`}
         </p>
       )}
+
+      {range.worst !== null &&
+        range.best !== null &&
+        range.inPlayCount > 0 && (
+          <p className="mt-1 text-xs leading-relaxed text-muted">
+            {`This ${noun} could finish anywhere from ${fmtGPA(range.worst)} to ${fmtGPA(range.best)} GPA${
+              range.lockedCount > 0
+                ? ` — ${range.lockedCount} course${range.lockedCount === 1 ? "" : "s"} already locked in.`
+                : "."
+            }`}
+          </p>
+        )}
 
       <WhatIfSection
         termCourses={termCourses}

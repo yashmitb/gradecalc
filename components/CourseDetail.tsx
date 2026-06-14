@@ -5,9 +5,11 @@ import { AnimatePresence, animate, motion } from "framer-motion";
 import {
   ArrowLeft,
   ChevronDown,
+  Lock,
   Plus,
   RefreshCw,
   RotateCcw,
+  ShieldCheck,
   Sparkles,
   Trash2,
   TriangleAlert,
@@ -30,6 +32,7 @@ import {
   uid,
 } from "@/lib/grades";
 import { DEFAULT_CREDITS, effectiveGrade, fmtGPA, gpaPointsFor } from "@/lib/gpa";
+import { courseReality } from "@/lib/reality";
 import {
   DEFAULT_SCALE,
   SCALE_PRESETS,
@@ -80,6 +83,7 @@ export function CourseDetail({
     egrade !== null ? gpaPointsFor(egrade, course.gradingScale) : null;
   const scale = course.gradingScale;
   const includeInGPA = course.includeInGPA ?? true;
+  const reality = courseReality(course);
 
   // The course title is an auto-growing textarea so long names wrap instead
   // of clipping on narrow screens. Re-measure on edit and on viewport resize.
@@ -210,6 +214,49 @@ export function CourseDetail({
         {cur !== null && (
           <div className="mt-5">
             <GradeProgressBar current={cur} target={targetGrade} status={status} />
+          </div>
+        )}
+
+        {reality.graded && reality.hasUngraded && (
+          <div className="mt-4 border-t border-border pt-4">
+            {reality.decided ? (
+              <div className="flex items-center gap-2 text-sm">
+                <Lock className="h-4 w-4 shrink-0 text-accent" />
+                <span className="text-foreground">
+                  Locked at{" "}
+                  <span className="font-bold text-accent">
+                    {reality.lockedLetter}
+                  </span>{" "}
+                  — nothing left can change your letter.
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm text-muted">
+                <span>
+                  Worst case{" "}
+                  <span className="tnum font-semibold text-foreground">
+                    {fmt(reality.floor)}%
+                  </span>{" "}
+                  ({reality.floorLetter})
+                </span>
+                <span aria-hidden className="text-border">
+                  ·
+                </span>
+                <span>
+                  Best case{" "}
+                  <span className="tnum font-semibold text-foreground">
+                    {fmt(reality.ceiling)}%
+                  </span>{" "}
+                  ({reality.ceilingLetter})
+                </span>
+                {!reality.canStillFail && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-accent-soft bg-accent-dim px-2 py-0.5 text-xs font-semibold text-accent">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    can&apos;t fail
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         )}
       </Card>
