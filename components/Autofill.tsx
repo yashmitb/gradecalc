@@ -331,7 +331,7 @@ export function Autofill({
                     className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-9 text-center transition-colors ${
                       drag
                         ? "border-accent bg-accent-dim"
-                        : "border-border hover:border-white/20 hover:bg-surface-2"
+                        : "border-border hover:border-foreground/20 hover:bg-surface-2"
                     }`}
                   >
                     <UploadCloud className="h-7 w-7 text-muted" />

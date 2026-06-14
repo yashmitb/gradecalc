@@ -19,7 +19,7 @@ export function GitHubBadge() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ ...springs.smooth, delay: 0.6 }}
       whileTap={{ scale: 0.97 }}
-      className="group fixed bottom-5 right-5 z-40 flex h-10 items-center gap-2.5 overflow-hidden rounded-full border border-border bg-surface/90 px-2.5 text-foreground shadow-[0_8px_30px_-6px_rgba(0,0,0,0.6)] backdrop-blur transition-colors hover:border-accent-soft hover:bg-surface-2"
+      className="group fixed bottom-5 right-5 z-40 flex h-10 items-center gap-2.5 overflow-hidden rounded-full border border-border bg-surface/90 px-2.5 text-foreground shadow-[var(--elev-shadow)] backdrop-blur transition-colors hover:border-accent-soft hover:bg-surface-2"
       aria-label="Open source on GitHub. Made by Yashmit B — feel free to fork."
       title="Open source on GitHub"
     >

@@ -117,7 +117,7 @@ export function GradeProgressBar({
           transition={springs.smooth}
         />
         <motion.div
-          className="absolute top-0 h-full w-[2px] bg-white/50"
+          className="absolute top-0 h-full w-[2px] bg-foreground/45"
           initial={{ left: 0, opacity: 0 }}
           animate={{ left: `${targetPct}%`, opacity: 1 }}
           transition={springs.smooth}

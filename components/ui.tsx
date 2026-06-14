@@ -23,7 +23,7 @@ export function Button({
       "bg-accent text-[#0a0a0a] border border-accent hover:shadow-[0_0_24px_-2px_rgba(95,168,138,0.55)]",
     // glass-adjacent: bordered, fills on hover
     outline:
-      "border border-border bg-surface text-foreground hover:bg-surface-2 hover:border-white/15",
+      "border border-border bg-surface text-foreground hover:bg-surface-2 hover:border-foreground/20",
     ghost: "bg-transparent text-muted hover:text-foreground hover:bg-surface-2",
     danger: "bg-transparent text-muted hover:text-red-400 hover:bg-surface-2",
   };
@@ -76,7 +76,7 @@ export function GlassPanel({
   return (
     <div
       className={cn(
-        "glass rounded-2xl border border-white/10 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.6)]",
+        "glass rounded-2xl border border-[color:var(--glass-border)] shadow-[var(--elev-shadow)]",
         specular && "specular",
         className,
       )}

@@ -108,7 +108,7 @@ export function InfoTip({
             exit={{ opacity: 0, y: side === "top" ? 4 : -4 }}
             transition={springs.snappy}
             className={cn(
-              "absolute z-50 w-52 rounded-xl border border-white/10 bg-surface-2 p-3 text-xs font-normal normal-case leading-relaxed tracking-normal text-muted shadow-[0_8px_30px_-6px_rgba(0,0,0,0.65)]",
+              "absolute z-50 w-52 rounded-xl border border-[color:var(--glass-border)] bg-surface-2 p-3 text-xs font-normal normal-case leading-relaxed tracking-normal text-muted shadow-[var(--elev-shadow)]",
               side === "top" ? "bottom-full mb-2" : "top-full mt-2",
               align === "center" && "left-1/2 -translate-x-1/2",
               align === "start" && "left-0",

@@ -22,8 +22,15 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0a",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: light)", color: "#f3f4f3" },
+  ],
 };
+
+// Runs before first paint so the saved theme is applied with no flash of the
+// wrong colors. Kept tiny and dependency-free on purpose.
+const themeScript = `(function(){try{var p=localStorage.getItem('gradehq.theme.v1');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;var r=(p==='light'||p==='dark')?p:(d?'dark':'light');document.documentElement.setAttribute('data-theme',r);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
 
 export default function RootLayout({
   children,
@@ -32,6 +39,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-dvh" suppressHydrationWarning>
         {children}
       </body>

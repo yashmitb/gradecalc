@@ -17,6 +17,7 @@ import { ApiKeyDialog } from "@/components/ApiKeyDialog";
 import { CourseDetail } from "@/components/CourseDetail";
 import { Welcome } from "@/components/Welcome";
 import { GitHubBadge } from "@/components/GitHubBadge";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { StatusBadge } from "@/components/Visualizations";
 import { GPAPanel } from "@/components/GPAPanel";
 import { WhatIfPanel } from "@/components/WhatIfPanel";
@@ -252,23 +253,11 @@ function NavBar({
   return (
     <motion.header
       initial={{ opacity: 0, y: -12 }}
-      animate={{
-        opacity: 1,
-        y: 0,
-        backgroundColor: scrolled
-          ? "rgba(28, 28, 32, 0.72)"
-          : "rgba(17, 17, 17, 0)",
-        boxShadow: scrolled
-          ? "0 8px 30px -6px rgba(0,0,0,0.6)"
-          : "0 0 0 0 rgba(0,0,0,0)",
-        borderColor: scrolled ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0)",
-      }}
+      animate={{ opacity: 1, y: 0 }}
       transition={springs.smooth}
-      className="specular fixed left-5 right-5 top-4 z-50 mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-full border px-4 py-2.5 sm:px-5"
-      style={{
-        backdropFilter: scrolled ? "blur(20px) saturate(1.6)" : "none",
-        WebkitBackdropFilter: scrolled ? "blur(20px) saturate(1.6)" : "none",
-      }}
+      className={`nav specular fixed left-5 right-5 top-4 z-50 mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-full border px-4 py-2.5 sm:px-5 ${
+        scrolled ? "nav-scrolled" : ""
+      }`}
     >
       <button
         onClick={onHome}
@@ -287,6 +276,7 @@ function NavBar({
         </span>
       </button>
       <div className="flex items-center gap-2">
+        <ThemeToggle />
         <Button
           variant="ghost"
           size="icon"
@@ -419,7 +409,7 @@ function CourseTile({
       transition={springs.bouncy}
       onClick={onOpen}
       style={accentStyle(course.color)}
-      className="group flex flex-col items-start gap-6 rounded-2xl border border-border bg-surface p-5 text-left cursor-pointer transition-colors hover:bg-surface-2 hover:border-white/10"
+      className="group flex flex-col items-start gap-6 rounded-2xl border border-border bg-surface p-5 text-left cursor-pointer transition-colors hover:bg-surface-2 hover:border-foreground/10"
     >
       <div className="flex w-full items-start justify-between gap-2">
         <h3 className="flex min-w-0 items-center gap-2 font-bold tracking-tight">

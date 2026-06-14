@@ -1,7 +1,11 @@
 @import "tailwindcss";
 
-/* ---- GradeCalc — Liquid Glass (dark + gold accent) ---- */
-:root {
+/* ---- GradeHQ — Liquid Glass ----
+   Theme values live on CSS variables so the whole system re-skins by flipping
+   `data-theme` on <html>. Dark is the default (also under [data-theme="dark"]);
+   light is a frosted-glass translation of the same design. */
+:root,
+[data-theme="dark"] {
   --color-bg: #0a0a0a;
   --color-surface: #111111;
   --color-surface-2: #161616;
@@ -12,6 +16,44 @@
   --color-accent: #5fa88a;
   --color-accent-soft: rgba(95, 168, 138, 0.24);
   --color-accent-dim: rgba(95, 168, 138, 0.12);
+
+  /* theme-dependent surface treatments */
+  --glass-bg: rgba(28, 28, 32, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --nav-border: rgba(255, 255, 255, 0.1);
+  --specular: rgba(255, 255, 255, 0.3);
+  --grid-line: rgba(255, 255, 255, 0.025);
+  --glow-highlight: rgba(255, 255, 255, 0.035);
+  --elev-shadow: 0 8px 30px -6px rgba(0, 0, 0, 0.6);
+  --scrollbar-thumb: #2a2a2a;
+  --scrollbar-thumb-hover: #3d3d3d;
+
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --color-bg: #f3f4f3;
+  --color-surface: #ffffff;
+  --color-surface-2: #eaedea;
+  --color-border: #dde1de;
+  --color-muted: #5c6862;
+  --color-text: #14181a;
+
+  --color-accent: #2f7d5e;
+  --color-accent-soft: rgba(47, 125, 94, 0.3);
+  --color-accent-dim: rgba(47, 125, 94, 0.12);
+
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(20, 40, 30, 0.1);
+  --nav-border: rgba(20, 40, 30, 0.1);
+  --specular: rgba(255, 255, 255, 0.7);
+  --grid-line: rgba(20, 45, 32, 0.045);
+  --glow-highlight: rgba(255, 255, 255, 0.5);
+  --elev-shadow: 0 10px 30px -10px rgba(20, 45, 32, 0.18);
+  --scrollbar-thumb: #ccd2ce;
+  --scrollbar-thumb-hover: #b4bcb7;
+
+  color-scheme: light;
 }
 
 @theme inline {
@@ -29,10 +71,19 @@
 }
 
 html {
-  color-scheme: dark;
   /* keep viewport width stable whether or not a scrollbar is present, so the
      centered fixed navbar never jumps sideways between views */
   scrollbar-gutter: stable;
+}
+
+/* Ease the whole page between themes instead of hard-cutting. */
+body,
+.glass,
+.nav {
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease;
 }
 
 body {
@@ -57,7 +108,7 @@ body::before {
   z-index: -2;
   background:
     radial-gradient(55% 55% at 25% 0%, var(--color-accent-dim) 0%, transparent 65%),
-    radial-gradient(45% 45% at 85% 8%, rgba(255, 255, 255, 0.035) 0%, transparent 65%);
+    radial-gradient(45% 45% at 85% 8%, var(--glow-highlight) 0%, transparent 65%);
   pointer-events: none;
 }
 body::after {
@@ -66,8 +117,8 @@ body::after {
   inset: 0;
   z-index: -3;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 75%);
   pointer-events: none;
@@ -84,7 +135,27 @@ body::after {
    a default `position: relative` for plain Card/GlassPanel surfaces. */
 @layer components {
   .glass {
-    background-color: rgba(28, 28, 32, 0.72);
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    backdrop-filter: blur(20px) saturate(1.6);
+  }
+
+  /* Floating top nav: transparent until scrolled, then frosts in. Driven by a
+     class toggle (not framer) so it stays correct across themes. */
+  .nav {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: 0 0 0 0 transparent;
+    transition:
+      background-color 0.3s ease,
+      border-color 0.3s ease,
+      box-shadow 0.3s ease,
+      backdrop-filter 0.3s ease;
+  }
+  .nav-scrolled {
+    background-color: var(--glass-bg);
+    border-color: var(--nav-border);
+    box-shadow: var(--elev-shadow);
     -webkit-backdrop-filter: blur(20px) saturate(1.6);
     backdrop-filter: blur(20px) saturate(1.6);
   }
@@ -103,7 +174,7 @@ body::after {
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.3),
+      var(--specular),
       transparent
     );
     pointer-events: none;
@@ -182,11 +253,11 @@ body::after {
   height: 12px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: var(--scrollbar-thumb);
   border: 3px solid var(--color-bg);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3d3d3d;
+  background: var(--scrollbar-thumb-hover);
 }
 
 @media (prefers-reduced-motion: reduce) {
