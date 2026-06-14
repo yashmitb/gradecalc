@@ -15,6 +15,7 @@ import {
 import { Button, Card, GlassPanel, Input, Label, Pill } from "./ui";
 import { CategoryBreakdown, GradeProgressBar, StatusBadge } from "./Visualizations";
 import { InfoTip } from "./InfoTip";
+import { Select } from "./Select";
 import { AskAiFix, type WireCategory } from "./AskAiFix";
 import { springs } from "@/lib/springs";
 import type { Category, Course } from "@/lib/types";
@@ -339,19 +340,16 @@ export function CourseDetail({
 
             <div>
               <Label>On this</Label>
-              <select
+              <Select
                 value={targetCatId}
-                onChange={(e) => setTargetCatId(e.target.value)}
-                className="h-11 w-full cursor-pointer rounded-xl border border-border bg-surface px-3 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent-dim"
-                aria-label="Category to solve for"
-              >
-                {cats.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                    {c.score !== null ? "  (already graded)" : ""}
-                  </option>
-                ))}
-              </select>
+                onChange={setTargetCatId}
+                ariaLabel="Category to solve for"
+                options={cats.map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                  hint: c.score !== null ? "graded" : undefined,
+                }))}
+              />
               <p className="mt-2 text-xs leading-relaxed text-muted">
                 Other ungraded categories are assumed to score 0% — a worst-case
                 answer.

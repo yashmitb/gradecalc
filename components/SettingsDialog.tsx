@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Plus, Trash2, X } from "lucide-react";
 import { Button, Input, Label } from "./ui";
 import { InfoTip } from "./InfoTip";
+import { Select } from "./Select";
 import { springs } from "@/lib/springs";
 import { useTheme, type ThemePref } from "@/lib/useTheme";
 import { semesterGPA, fmtGPA } from "@/lib/gpa";
@@ -227,18 +228,14 @@ export function SettingsDialog({
 
               {/* Add term */}
               <div className="mt-2.5 flex items-center gap-2">
-                <select
+                <Select
                   value={season}
-                  onChange={(e) => setSeason(e.target.value as Season)}
-                  aria-label="Season"
-                  className="h-10 flex-1 cursor-pointer rounded-xl border border-border bg-surface px-2.5 text-sm text-foreground outline-none transition-colors focus:border-accent"
-                >
-                  {seasons.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setSeason(v as Season)}
+                  ariaLabel="Season"
+                  className="flex-1"
+                  triggerClassName="h-10 px-2.5"
+                  options={seasons.map((s) => ({ value: s, label: s }))}
+                />
                 <Input
                   type="number"
                   inputMode="numeric"
