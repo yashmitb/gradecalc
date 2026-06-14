@@ -199,6 +199,17 @@ what's in flight, and any decisions made along the way.
         Lightened the GPA panel (borderless stats, no nested boxes).
       • Reusable InfoTip ("i") with viewport-clamped tooltips on the confusing
         bits: GPA projection, what-if scenarios, units, count-toward-GPA.
+- [x] Terms (semesters / quarters) + Settings popup — courses now belong to a
+      term; the dashboard, term GPA, and what-if all scope to the active term,
+      switchable from a dashboard pill. A Settings popover (gear in the navbar)
+      holds: the semester⇄quarter switch (relabels term GPA + offered seasons,
+      smart current-term default from the date), term management (add/remove,
+      per-term GPA), the theme control (moved out of the navbar), and the GPA
+      setup inputs (moved out of the GPA panel). Cumulative GPA is now smart:
+      it auto-blends every term's courses with the optional "before GradeHQ"
+      prior. New courses land in the active term; pre-terms courses migrate in.
+      (Theme init moved to /theme-init.js via next/script to keep the console
+      clean under React 19.)
 - [x] Per-course custom grading scales — lib/scale.ts holds the canonical
       default scale (single source of truth shared with letterFor + GPA points)
       plus a "Letter only" preset. Each course can pick a preset or edit the

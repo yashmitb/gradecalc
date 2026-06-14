@@ -16,17 +16,32 @@ import {
   semesterGPA,
   type GradeOverrides,
 } from "@/lib/gpa";
-import { useProfile } from "@/lib/useProfile";
+import { termNoun, type TermSystem } from "@/lib/terms";
+import type { Profile } from "@/lib/useProfile";
 import type { Course } from "@/lib/types";
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
  * "What if I get a B+ here and an A- there?" — per-course sliders for a
  * hypothetical final grade that live-update that course's letter grade/GPA
- * points, plus the overall semester (and cumulative, if set up) GPA. Purely
- * a scratchpad — never touches real category scores.
+ * points, plus the active term's GPA and the blended cumulative. Purely a
+ * scratchpad — never touches real category scores.
  */
-export function WhatIfPanel({ courses }: { courses: Course[] }) {
-  const { profile, ready } = useProfile();
+export function WhatIfPanel({
+  courses,
+  allCourses,
+  profile,
+  system,
+}: {
+  /** Active-term courses (the sliders). */
+  courses: Course[];
+  /** Every course across terms (for the projected cumulative). */
+  allCourses: Course[];
+  profile: Profile;
+  system: TermSystem;
+}) {
+  const noun = termNoun(system);
   const [open, setOpen] = React.useState(false);
   const [overrides, setOverrides] = React.useState<GradeOverrides>({});
 
@@ -40,16 +55,19 @@ export function WhatIfPanel({ courses }: { courses: Course[] }) {
     [courses],
   );
 
-  if (!ready || eligible.length === 0) return null;
+  if (eligible.length === 0) return null;
 
   const hasOverrides = Object.keys(overrides).length > 0;
   const sem = semesterGPA(courses, overrides);
+  const allSem = semesterGPA(allCourses, overrides);
   const hasPrior =
     profile.priorGPA !== null &&
     profile.priorCredits !== null &&
     profile.priorCredits > 0;
-  const cum = hasPrior
-    ? cumulativeGPA(profile.priorGPA!, profile.priorCredits!, sem)
+  const termIds = new Set(courses.map((c) => c.id));
+  const showCumulative = hasPrior || allCourses.some((c) => !termIds.has(c.id));
+  const cum = showCumulative
+    ? cumulativeGPA(profile.priorGPA ?? 0, profile.priorCredits ?? 0, allSem)
     : null;
 
   const setOverride = (id: string, value: number) =>
@@ -96,7 +114,7 @@ export function WhatIfPanel({ courses }: { courses: Course[] }) {
             <div className="mt-5 border-t border-border pt-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <p className="max-w-md text-xs leading-relaxed text-muted">
-                  {`Drag a course to a hypothetical final grade and watch your semester${hasPrior ? " and cumulative" : ""} GPA update — your real grades aren't touched.`}
+                  {`Drag a course to a hypothetical final grade and watch your ${noun}${showCumulative ? " and cumulative" : ""} GPA update — your real grades aren't touched.`}
                 </p>
                 {hasOverrides && (
                   <Button
@@ -171,13 +189,13 @@ export function WhatIfPanel({ courses }: { courses: Course[] }) {
               <div className="mt-6 grid grid-cols-1 gap-3 rounded-2xl border border-accent-soft bg-accent-dim p-4 sm:grid-cols-2">
                 <div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
-                    Projected semester GPA
+                    Projected {cap(noun)} GPA
                   </div>
                   <div className="tnum mt-1 text-2xl font-extrabold tracking-tight text-foreground">
                     {fmtGPA(sem.gpa)}
                   </div>
                 </div>
-                {hasPrior && (
+                {showCumulative && (
                   <div>
                     <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
                       Projected cumulative GPA

@@ -24,6 +24,8 @@ export type Course = {
   color?: string;
   /** Custom %→letter→GPA scale; falls back to the default scale when unset. */
   gradingScale?: GradingScale;
+  /** Which term (semester/quarter) this course belongs to. */
+  termId?: string;
 };
 
 /** Something the AI couldn't resolve confidently and needs the user to confirm. */

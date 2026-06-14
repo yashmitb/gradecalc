@@ -29,10 +29,6 @@ export const viewport: Viewport = {
   ],
 };
 
-// Runs before first paint so the saved theme is applied with no flash of the
-// wrong colors. Kept tiny and dependency-free on purpose.
-const themeScript = `(function(){try{var p=localStorage.getItem('gradehq.theme.v1');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;var r=(p==='light'||p==='dark')?p:(d?'dark':'light');document.documentElement.setAttribute('data-theme',r);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -41,9 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh" suppressHydrationWarning>
-        <Script id="theme-init" strategy="beforeInteractive">
-          {themeScript}
-        </Script>
+        <Script src="/theme-init.js" strategy="beforeInteractive" />
         {children}
       </body>
     </html>

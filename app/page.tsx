@@ -4,10 +4,13 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
+  CalendarDays,
+  ChevronDown,
   CircleHelp,
   KeyRound,
   Plus,
   Search,
+  Settings,
   Sparkles,
   X,
 } from "lucide-react";
@@ -17,7 +20,7 @@ import { ApiKeyDialog } from "@/components/ApiKeyDialog";
 import { CourseDetail } from "@/components/CourseDetail";
 import { Welcome } from "@/components/Welcome";
 import { GitHubBadge } from "@/components/GitHubBadge";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { SettingsDialog } from "@/components/SettingsDialog";
 import { StatusBadge } from "@/components/Visualizations";
 import { GPAPanel } from "@/components/GPAPanel";
 import { WhatIfPanel } from "@/components/WhatIfPanel";
@@ -25,6 +28,9 @@ import { accentStyle, courseColorBase } from "@/lib/colors";
 import { useCourses } from "@/lib/useCourses";
 import { useApiKey } from "@/lib/useApiKey";
 import { useOnboarding } from "@/lib/useOnboarding";
+import { useProfile } from "@/lib/useProfile";
+import { useTerms } from "@/lib/useTerms";
+import { sortTermsDesc, termLabel, type Term } from "@/lib/terms";
 import { springs, fadeUp } from "@/lib/springs";
 import {
   courseStatus,
@@ -43,19 +49,40 @@ export default function Home() {
     useCourses();
   const { key, setKey, clearKey, hasKey, hasServerKey } = useApiKey();
   const onboarding = useOnboarding();
+  const terms = useTerms();
+  const { profile, update: updateProfile } = useProfile();
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [autofillOpen, setAutofillOpen] = React.useState(false);
   const [keyOpen, setKeyOpen] = React.useState(false);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
   // When set, the auto-fill dialog opens in "re-sync" mode for this course.
   const [mergeTargetId, setMergeTargetId] = React.useState<string | null>(null);
 
   const active = courses.find((c) => c.id === activeId) ?? null;
   const mergeTarget = courses.find((c) => c.id === mergeTargetId) ?? null;
 
+  // Courses in the active term (the dashboard, GPA, and what-if all scope here).
+  const termCourses = React.useMemo(
+    () => courses.filter((c) => c.termId === terms.activeId),
+    [courses, terms.activeId],
+  );
+  const activeTerm = terms.terms.find((t) => t.id === terms.activeId) ?? null;
+
+  // Migrate any course without a (valid) term into the active term — covers
+  // pre-terms data and keeps everything visible.
+  React.useEffect(() => {
+    if (!ready || !terms.ready) return;
+    const validIds = new Set(terms.terms.map((t) => t.id));
+    const orphans = courses.filter((c) => !c.termId || !validIds.has(c.termId));
+    if (orphans.length === 0) return;
+    orphans.forEach((c) => updateCourse(c.id, { termId: terms.activeId }));
+  }, [ready, terms.ready, courses, terms.terms, terms.activeId, updateCourse]);
+
   const handleParsed = (parsed: ParsedCourse) => {
     const course: Course = {
       id: uid(),
       name: parsed.name,
+      termId: terms.activeId,
       categories: parsed.categories.map((c) => ({
         id: uid(),
         name: c.name,
@@ -70,7 +97,7 @@ export default function Home() {
   };
 
   const handleAddManual = () => {
-    const c = emptyCourse();
+    const c = { ...emptyCourse(), termId: terms.activeId };
     addCourse(c);
     setActiveId(c.id);
   };
@@ -103,6 +130,20 @@ export default function Home() {
         onSave={setKey}
         onClear={clearKey}
       />
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        courses={courses}
+        system={terms.system}
+        terms={terms.terms}
+        activeId={terms.activeId}
+        setSystem={terms.setSystem}
+        setActive={terms.setActive}
+        addTerm={terms.addTerm}
+        removeTerm={terms.removeTerm}
+        profile={profile}
+        updateProfile={updateProfile}
+      />
 
       <NavBar
         hasKey={hasKey}
@@ -110,6 +151,7 @@ export default function Home() {
         onHome={() => setActiveId(null)}
         onKey={() => setKeyOpen(true)}
         onHelp={onboarding.reopen}
+        onSettings={() => setSettingsOpen(true)}
       />
 
       <div className="px-5 pt-28 sm:pt-32">
@@ -176,16 +218,41 @@ export default function Home() {
               </motion.div>
             </motion.div>
 
-            {!ready ? null : courses.length === 0 ? (
+            {!ready || !terms.ready ? null : courses.length === 0 ? (
               <EmptyState onAdd={handleAddManual} />
             ) : (
               <>
-                <DashboardSummary courses={courses} />
-                <CoursesSection courses={courses} onOpen={setActiveId} />
-                <div className="mt-14 border-t border-border pt-10">
-                  <GPAPanel courses={courses} />
-                  <WhatIfPanel courses={courses} />
-                </div>
+                <TermSwitcher
+                  terms={terms.terms}
+                  activeId={terms.activeId}
+                  onChange={terms.setActive}
+                  onManage={() => setSettingsOpen(true)}
+                />
+                {termCourses.length === 0 ? (
+                  <TermEmptyState
+                    label={activeTerm ? termLabel(activeTerm) : "this term"}
+                    onAdd={handleAddManual}
+                  />
+                ) : (
+                  <>
+                    <DashboardSummary courses={termCourses} />
+                    <CoursesSection courses={termCourses} onOpen={setActiveId} />
+                    <div className="mt-14 border-t border-border pt-10">
+                      <GPAPanel
+                        termCourses={termCourses}
+                        allCourses={courses}
+                        system={terms.system}
+                        profile={profile}
+                      />
+                      <WhatIfPanel
+                        courses={termCourses}
+                        allCourses={courses}
+                        profile={profile}
+                        system={terms.system}
+                      />
+                    </div>
+                  </>
+                )}
               </>
             )}
           </main>
@@ -206,12 +273,14 @@ function NavBar({
   onHome,
   onKey,
   onHelp,
+  onSettings,
 }: {
   hasKey: boolean;
   hasServerKey: boolean | null;
   onHome: () => void;
   onKey: () => void;
   onHelp: () => void;
+  onSettings: () => void;
 }) {
   const [scrolled, setScrolled] = React.useState(false);
 
@@ -279,7 +348,15 @@ function NavBar({
         </span>
       </button>
       <div className="flex items-center gap-2">
-        <ThemeToggle />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onSettings}
+          aria-label="Settings"
+          title="Settings"
+        >
+          <Settings className="h-4 w-4" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -517,6 +594,68 @@ function Metric({ value, label }: { value: string; label: string }) {
       <span className="tnum text-xl font-extrabold tracking-tight">{value}</span>
       <span className="text-sm text-muted">{label}</span>
     </div>
+  );
+}
+
+function TermSwitcher({
+  terms,
+  activeId,
+  onChange,
+  onManage,
+}: {
+  terms: Term[];
+  activeId: string;
+  onChange: (id: string) => void;
+  onManage: () => void;
+}) {
+  return (
+    <div className="mb-6 flex items-center gap-2">
+      <CalendarDays className="h-4 w-4 shrink-0 text-muted" />
+      <div className="relative">
+        <select
+          value={activeId}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label="Active term"
+          className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-surface pl-3.5 pr-9 text-sm font-semibold text-foreground outline-none transition-colors hover:bg-surface-2 focus:border-accent"
+        >
+          {sortTermsDesc(terms).map((t) => (
+            <option key={t.id} value={t.id}>
+              {termLabel(t)}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+      </div>
+      <button
+        onClick={onManage}
+        className="text-xs font-semibold text-muted transition-colors hover:text-foreground cursor-pointer"
+      >
+        Manage
+      </button>
+    </div>
+  );
+}
+
+function TermEmptyState({
+  label,
+  onAdd,
+}: {
+  label: string;
+  onAdd: () => void;
+}) {
+  return (
+    <Card className="flex flex-col items-start gap-4 p-8">
+      <h2 className="text-xl font-bold tracking-tight">
+        No courses in {label} yet
+      </h2>
+      <p className="max-w-sm text-sm leading-relaxed text-muted">
+        Add a course to this term, or switch to another term above.
+      </p>
+      <Button variant="outline" size="sm" onClick={onAdd}>
+        <Plus className="h-4 w-4" />
+        Add a course
+      </Button>
+    </Card>
   );
 }
 
