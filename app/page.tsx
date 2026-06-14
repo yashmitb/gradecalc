@@ -245,8 +245,10 @@ export default function Home() {
         )}
 
         <footer className="mx-auto mt-20 max-w-3xl border-t border-border pt-6 text-xs leading-relaxed text-muted">
-          Free and open. No account, no tracking — your grades never leave
-          your browser, except the file you choose to auto-fill.
+          Free and open. No account, no tracking — your grades stay in your
+          browser. They&apos;re only sent out when you use an AI feature
+          (auto-fill, Ask AI, or fix-with-AI), which sends what&apos;s needed to
+          Google Gemini to answer.
         </footer>
       </div>
     </div>

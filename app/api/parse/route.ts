@@ -310,8 +310,10 @@ export async function POST(req: Request) {
       ...(syllabusNotes ? { syllabusNotes } : {}),
     });
   } catch (err) {
-    console.error("[parse] gemini error", err);
     const msg = err instanceof Error ? err.message : String(err);
+    // Log only the message — never the full error object, which could echo
+    // request details.
+    console.error("[parse] gemini error:", msg);
     const status =
       typeof (err as { status?: unknown })?.status === "number"
         ? (err as { status: number }).status
