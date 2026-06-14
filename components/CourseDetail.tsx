@@ -1,8 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { animate, motion } from "framer-motion";
-import { ArrowLeft, Plus, RefreshCw, Trash2, TriangleAlert } from "lucide-react";
+import { AnimatePresence, animate, motion } from "framer-motion";
+import {
+  ArrowLeft,
+  ChevronDown,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react";
 import { Button, Card, GlassPanel, Input, Label, Pill } from "./ui";
 import { CategoryBreakdown, GradeProgressBar, StatusBadge } from "./Visualizations";
 import { InfoTip } from "./InfoTip";
@@ -19,6 +27,13 @@ import {
   uid,
 } from "@/lib/grades";
 import { DEFAULT_CREDITS, effectiveGrade, fmtGPA, gpaPointsFor } from "@/lib/gpa";
+import {
+  DEFAULT_SCALE,
+  SCALE_PRESETS,
+  normalizeScale,
+  presetIdFor,
+  type GradingScale,
+} from "@/lib/scale";
 import {
   COURSE_COLORS,
   DEFAULT_COURSE_COLOR,
@@ -52,7 +67,9 @@ export function CourseDetail({
   const status = courseStatus(cats, targetGrade);
 
   const egrade = effectiveGrade(course);
-  const gpaPoints = egrade !== null ? gpaPointsFor(egrade) : null;
+  const gpaPoints =
+    egrade !== null ? gpaPointsFor(egrade, course.gradingScale) : null;
+  const scale = course.gradingScale;
   const includeInGPA = course.includeInGPA ?? true;
 
   // The course title is an auto-growing textarea so long names wrap instead
@@ -158,7 +175,7 @@ export function CourseDetail({
           </span>
           {cur !== null && (
             <span className="rounded-full border border-accent-soft bg-accent-dim px-2.5 py-0.5 text-sm font-bold text-accent">
-              {letterFor(cur)}
+              {letterFor(cur, scale)}
             </span>
           )}
           {cur !== null && <StatusBadge status={status} />}
@@ -325,6 +342,13 @@ export function CourseDetail({
         </div>
       </Card>
 
+      <div className="mt-6">
+        <GradingScaleEditor
+          value={course.gradingScale}
+          onChange={(s) => onChange({ gradingScale: s })}
+        />
+      </div>
+
       {!weightOk && (
         <p className="mt-3 flex items-center gap-1.5 px-0.5 text-sm text-muted">
           <TriangleAlert className="h-4 w-4" />
@@ -389,12 +413,187 @@ export function CourseDetail({
             </div>
           </div>
 
-          <Reveal result={result} targetCat={targetCat} targetGrade={targetGrade} />
+          <Reveal
+            result={result}
+            targetCat={targetCat}
+            targetGrade={targetGrade}
+            scale={scale}
+          />
         </div>
       ) : (
-        cur !== null && <FinalGrade grade={cur} />
+        cur !== null && <FinalGrade grade={cur} scale={scale} />
       )}
     </motion.div>
+  );
+}
+
+/**
+ * Collapsible per-course grading scale: pick a preset, or edit the %→letter→GPA
+ * rows directly. Stored on the course; `undefined` means "use the default".
+ */
+function GradingScaleEditor({
+  value,
+  onChange,
+}: {
+  value?: GradingScale;
+  onChange: (scale: GradingScale | undefined) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const scale = value ?? DEFAULT_SCALE;
+  const activePreset = presetIdFor(value);
+  const presetName =
+    SCALE_PRESETS.find((p) => p.id === activePreset)?.name ?? "Custom";
+
+  const setTier = (i: number, patch: Partial<GradingScale[number]>) =>
+    onChange(scale.map((t, j) => (j === i ? { ...t, ...patch } : t)));
+  const addTier = () =>
+    onChange([...scale, { min: 0, letter: "—", points: 0 }]);
+  const removeTier = (i: number) =>
+    onChange(scale.filter((_, j) => j !== i));
+  const applyPreset = (id: string) => {
+    if (id === "standard") return onChange(undefined); // default → store nothing
+    const p = SCALE_PRESETS.find((x) => x.id === id);
+    if (p) onChange(normalizeScale(p.scale));
+  };
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="flex items-center justify-between gap-3 p-6">
+        <div className="flex items-center gap-2">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Grading scale
+          </h2>
+          <InfoTip
+            align="start"
+            label="How percentages become letters and GPA points for this course. Auto-detected from a syllabus when possible — or pick a preset and fine-tune it."
+          />
+        </div>
+        <button
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-muted transition-colors hover:text-foreground"
+        >
+          <span>{presetName}</span>
+          <motion.span
+            animate={{ rotate: open ? 180 : 0 }}
+            transition={springs.snappy}
+            className="flex"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </motion.span>
+        </button>
+      </div>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={springs.smooth}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-border p-6 pt-5">
+              <div className="mb-4 flex flex-wrap items-center gap-1.5">
+                {SCALE_PRESETS.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => applyPreset(p.id)}
+                    className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      activePreset === p.id
+                        ? "bg-accent text-[#0a0a0a]"
+                        : "border border-border text-muted hover:bg-surface-2 hover:text-foreground"
+                    }`}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+                {value !== undefined && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onChange(undefined)}
+                    className="ml-auto"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Reset
+                  </Button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-[1fr_84px_84px_44px] gap-2 px-1 pb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                <span>Letter</span>
+                <span className="text-right">Min %</span>
+                <span className="text-right">GPA</span>
+                <span />
+              </div>
+              <div className="space-y-1.5">
+                {scale.map((t, i) => (
+                  <div
+                    key={i}
+                    className="grid grid-cols-[1fr_84px_84px_44px] items-center gap-2"
+                  >
+                    <Input
+                      value={t.letter}
+                      onChange={(e) => setTier(i, { letter: e.target.value })}
+                      className="h-10"
+                      aria-label={`Tier ${i + 1} letter`}
+                    />
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      value={Number.isFinite(t.min) ? t.min : ""}
+                      onChange={(e) =>
+                        setTier(i, {
+                          min: Math.max(
+                            0,
+                            Math.min(100, parseFloat(e.target.value) || 0),
+                          ),
+                        })
+                      }
+                      className="h-10 text-right"
+                      aria-label={`Tier ${i + 1} minimum percent`}
+                    />
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      step={0.1}
+                      value={Number.isFinite(t.points) ? t.points : ""}
+                      onChange={(e) =>
+                        setTier(i, {
+                          points: Math.max(
+                            0,
+                            Math.min(5, parseFloat(e.target.value) || 0),
+                          ),
+                        })
+                      }
+                      className="h-10 text-right"
+                      aria-label={`Tier ${i + 1} GPA points`}
+                    />
+                    <button
+                      onClick={() => removeTier(i)}
+                      className="flex h-10 w-11 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-red-400 cursor-pointer"
+                      aria-label={`Remove tier ${i + 1}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={addTier}
+                className="mt-2 -ml-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add row
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Card>
   );
 }
 
@@ -402,10 +601,12 @@ function Reveal({
   result,
   targetCat,
   targetGrade,
+  scale,
 }: {
   result: ReturnType<typeof neededScore> | null;
   targetCat: Category | undefined;
   targetGrade: number;
+  scale?: GradingScale;
 }) {
   if (!result || !targetCat) return null;
 
@@ -443,7 +644,7 @@ function Reveal({
           <span className="font-semibold text-foreground">
             {targetCat.name}
           </span>{" "}
-          to finish at {fmt(targetGrade, 0)}% ({letterFor(targetGrade)})
+          to finish at {fmt(targetGrade, 0)}% ({letterFor(targetGrade, scale)})
         </>
       );
       break;
@@ -506,7 +707,7 @@ function Reveal({
 }
 
 /** Shown once every category is graded — the course is done. */
-function FinalGrade({ grade }: { grade: number }) {
+function FinalGrade({ grade, scale }: { grade: number; scale?: GradingScale }) {
   return (
     <motion.div
       key="final-grade"
@@ -533,7 +734,7 @@ function FinalGrade({ grade }: { grade: number }) {
         >
           Final grade —{" "}
           <span className="font-semibold text-foreground">
-            {letterFor(grade)}
+            {letterFor(grade, scale)}
           </span>
           . Every category is graded, nothing left to project.
         </motion.p>

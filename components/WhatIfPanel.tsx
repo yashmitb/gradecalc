@@ -122,7 +122,7 @@ export function WhatIfPanel({ courses }: { courses: Course[] }) {
               >
                 {eligible.map(({ course, current }) => {
                   const value = overrides[course.id] ?? current;
-                  const pts = gpaPointsFor(value);
+                  const pts = gpaPointsFor(value, course.gradingScale);
                   const pct = Math.max(0, Math.min(100, value));
                   const includeInGPA = course.includeInGPA ?? true;
                   return (
@@ -136,7 +136,7 @@ export function WhatIfPanel({ courses }: { courses: Course[] }) {
                             {fmt(value)}%
                           </span>
                           <span className="rounded-full border border-accent-soft bg-accent-dim px-2 py-0.5 text-xs font-bold text-accent transition-colors duration-150">
-                            {letterFor(value)}
+                            {letterFor(value, course.gradingScale)}
                           </span>
                         </div>
                       </div>

@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { normalizeScale, pointsForScale } from "@/lib/scale";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,6 +62,7 @@ Return:
 - name: the course name or code (e.g. "CSE 100", "Organic Chemistry"); "Imported Course" if unknown.
 - categories: each with a short name (e.g. "Homework", "Midterm", "Final", "Participation"), its weight as a percentage number (convert fractions like 0.2 → 20), and the current score as a percentage — only if you're confident it reflects the student's true standing under the syllabus's rules, otherwise null.
 - flags: a list of { category, reason } for each item you left null above, or any other ambiguity worth a human glance. Empty array if nothing needs attention.
+- gradingScale (optional): ONLY if the syllabus explicitly states a letter-grade scale (e.g. "A = 93-100, A- = 90-92, B+ = 87-89, ..."). Return each tier as { min: the minimum percent for that letter, letter, points: the GPA points if the syllabus states them, otherwise omit points }. If no explicit scale is given, omit gradingScale entirely — never invent one.
 
 Rules: weights are plain numbers that should sum to ~100. Never invent categories that aren't present.`;
 
@@ -205,6 +207,18 @@ export async function POST(req: Request) {
                 required: ["category", "reason"],
               },
             },
+            gradingScale: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  min: { type: Type.NUMBER },
+                  letter: { type: Type.STRING },
+                  points: { type: Type.NUMBER, nullable: true },
+                },
+                required: ["min", "letter"],
+              },
+            },
           },
           required: ["name", "categories"],
         },
@@ -223,6 +237,7 @@ export async function POST(req: Request) {
       name?: string;
       categories?: { name?: string; weight?: number; score?: number | null }[];
       flags?: { category?: string; reason?: string }[];
+      gradingScale?: { min?: number; letter?: string; points?: number | null }[];
     };
 
     // Collapse any internal newlines / runs of whitespace the model may pull
@@ -261,10 +276,27 @@ export async function POST(req: Request) {
         reason: String(f.reason).slice(0, 280),
       }));
 
+    // Only honor an explicitly-stated grading scale (≥2 tiers). Fill missing
+    // GPA points by inferring the standard points for each threshold.
+    const rawScale = Array.isArray(data.gradingScale) ? data.gradingScale : [];
+    const scaleTiers = rawScale
+      .filter((t) => t && t.letter !== undefined && t.min !== undefined)
+      .map((t) => {
+        const min = Math.max(0, Math.min(100, Number(t.min) || 0));
+        const points =
+          t.points === null || t.points === undefined || Number.isNaN(t.points)
+            ? pointsForScale(min)
+            : Math.max(0, Math.min(5, Number(t.points)));
+        return { min, letter: clean(String(t.letter)).slice(0, 4) || "—", points };
+      });
+    const gradingScale =
+      scaleTiers.length >= 2 ? normalizeScale(scaleTiers) : undefined;
+
     return Response.json({
       name: clean(String(data.name ?? "")).slice(0, 80) || "Imported Course",
       categories,
       flags,
+      ...(gradingScale ? { gradingScale } : {}),
     });
   } catch (err) {
     console.error("[parse] gemini error", err);

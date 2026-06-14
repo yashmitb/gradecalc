@@ -1,33 +1,19 @@
 import type { Course } from "./types";
 import { currentGrade, projectedGrade } from "./grades";
+import { DEFAULT_SCALE, pointsForScale, type GradingScale } from "./scale";
 
 /**
- * Standard unweighted 4.0 GPA scale, aligned with letterFor()'s percent
- * boundaries in lib/grades.ts. (A+ doesn't earn extra points — matches
- * most US university scales, including UCSD's.)
+ * Standard unweighted 4.0 GPA scale. Kept as an alias of the canonical
+ * DEFAULT_SCALE in lib/scale.ts (single source of truth shared with letterFor).
  */
-export const GPA_SCALE: { min: number; points: number; letter: string }[] = [
-  { min: 97, points: 4.0, letter: "A+" },
-  { min: 93, points: 4.0, letter: "A" },
-  { min: 90, points: 3.7, letter: "A-" },
-  { min: 87, points: 3.3, letter: "B+" },
-  { min: 83, points: 3.0, letter: "B" },
-  { min: 80, points: 2.7, letter: "B-" },
-  { min: 77, points: 2.3, letter: "C+" },
-  { min: 73, points: 2.0, letter: "C" },
-  { min: 70, points: 1.7, letter: "C-" },
-  { min: 55, points: 1.0, letter: "D" },
-  { min: 0, points: 0.0, letter: "F" },
-];
+export const GPA_SCALE = DEFAULT_SCALE;
 
 /** Default credit hours for a course when none is set. */
 export const DEFAULT_CREDITS = 4;
 
-export function gpaPointsFor(grade: number): number {
-  for (const tier of GPA_SCALE) {
-    if (grade >= tier.min) return tier.points;
-  }
-  return 0;
+/** GPA points for a percent, under an optional custom scale. */
+export function gpaPointsFor(grade: number, scale?: GradingScale): number {
+  return pointsForScale(grade, scale);
 }
 
 /**
@@ -72,7 +58,7 @@ export function courseGPAs(
     const credits = course.credits ?? DEFAULT_CREDITS;
     const override = overrides?.[course.id];
     const grade = override !== undefined ? override : effectiveGrade(course);
-    const points = grade !== null ? gpaPointsFor(grade) : null;
+    const points = grade !== null ? gpaPointsFor(grade, course.gradingScale) : null;
     const counted = (course.includeInGPA ?? true) && points !== null && credits > 0;
     return { course, credits, grade, points, counted };
   });

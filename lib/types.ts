@@ -1,3 +1,5 @@
+import type { GradingScale } from "./scale";
+
 export type Category = {
   id: string;
   /** Category name, e.g. "Homework", "Midterm", "Final" */
@@ -20,6 +22,8 @@ export type Course = {
   includeInGPA?: boolean;
   /** Accent color key (see lib/colors.ts). Defaults to the app green. */
   color?: string;
+  /** Custom %→letter→GPA scale; falls back to the default scale when unset. */
+  gradingScale?: GradingScale;
 };
 
 /** Something the AI couldn't resolve confidently and needs the user to confirm. */
@@ -36,6 +40,8 @@ export type ParsedCourse = {
   categories: { name: string; weight: number; score: number | null }[];
   /** Items the AI left blank / ambiguous on purpose — review before trusting. */
   flags?: ParsedFlag[];
+  /** Grade scale detected in the syllabus, if any. */
+  gradingScale?: GradingScale;
 };
 
 export const LETTER_TARGETS: { label: string; min: number }[] = [

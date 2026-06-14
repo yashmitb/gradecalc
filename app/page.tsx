@@ -62,6 +62,7 @@ export default function Home() {
         weight: c.weight,
         score: c.score,
       })),
+      ...(parsed.gradingScale ? { gradingScale: parsed.gradingScale } : {}),
     };
     addCourse(course);
     setActiveId(course.id);
@@ -433,7 +434,7 @@ function CourseTile({
           {cur !== null && <StatusBadge status={status} />}
           {cur !== null && (
             <span className="rounded-full border border-accent-soft bg-accent-dim px-2.5 py-0.5 text-sm font-bold text-accent">
-              {letterFor(cur)}
+              {letterFor(cur, course.gradingScale)}
             </span>
           )}
         </div>

@@ -1,4 +1,5 @@
 import type { Category, Course } from "./types";
+import { letterForScale, type GradingScale } from "./scale";
 
 export function uid(): string {
   return Math.random().toString(36).slice(2, 10);
@@ -114,18 +115,9 @@ export function courseStatus(
   return "on-track";
 }
 
-export function letterFor(grade: number): string {
-  if (grade >= 97) return "A+";
-  if (grade >= 93) return "A";
-  if (grade >= 90) return "A-";
-  if (grade >= 87) return "B+";
-  if (grade >= 83) return "B";
-  if (grade >= 80) return "B-";
-  if (grade >= 77) return "C+";
-  if (grade >= 73) return "C";
-  if (grade >= 70) return "C-";
-  if (grade >= 55) return "D";
-  return "F";
+/** Letter grade for a percent, under an optional custom scale. */
+export function letterFor(grade: number, scale?: GradingScale): string {
+  return letterForScale(grade, scale);
 }
 
 export function emptyCourse(name = "New Course"): Course {
