@@ -368,6 +368,31 @@ export function CourseDetail({
         cur !== null && <FinalGrade grade={cur} scale={scale} />
       )}
 
+      {/* Conversational correction — kept in reach (not buried in Customize). */}
+      <Card className="mt-6 p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-accent" />
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Ask AI to fix
+          </h2>
+          <InfoTip
+            align="start"
+            label="Describe a change in plain words — “midterm is 25% not 30%”, “add a 10% quiz”, “I got 95 on homework”. You'll see exactly what changes before it applies."
+          />
+        </div>
+        <AskAiFix
+          name={course.name}
+          categories={cats.map((c) => ({
+            name: c.name,
+            weight: c.weight,
+            score: c.score,
+          }))}
+          apiKey={apiKey}
+          onNeedKey={onNeedKey}
+          onApply={applyAiEdit}
+        />
+      </Card>
+
       {/* Everything optional lives behind one quiet toggle. */}
       <Card className="mt-10 overflow-hidden">
         <button
@@ -380,7 +405,7 @@ export function CourseDetail({
           </span>
           <span className="flex items-center gap-2 text-xs text-muted">
             <span className="hidden sm:inline">
-              Units · GPA scale · color · AI fix
+              Units · GPA scale · color
             </span>
             <motion.span
               animate={{ rotate: customizeOpen ? 180 : 0 }}
@@ -482,31 +507,6 @@ export function CourseDetail({
                   <GradingScaleEditor
                     value={course.gradingScale}
                     onChange={(s) => onChange({ gradingScale: s })}
-                  />
-                </div>
-
-                {/* Ask AI to fix */}
-                <div className="border-t border-border pt-5">
-                  <div className="mb-3 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-accent" />
-                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                      Ask AI to fix
-                    </h3>
-                    <InfoTip
-                      align="start"
-                      label="Describe a change in plain words — “midterm is 25% not 30%”, “add a 10% quiz”, “I got 95 on homework”. You'll see exactly what changes before it applies."
-                    />
-                  </div>
-                  <AskAiFix
-                    name={course.name}
-                    categories={cats.map((c) => ({
-                      name: c.name,
-                      weight: c.weight,
-                      score: c.score,
-                    }))}
-                    apiKey={apiKey}
-                    onNeedKey={onNeedKey}
-                    onApply={applyAiEdit}
                   />
                 </div>
               </div>
