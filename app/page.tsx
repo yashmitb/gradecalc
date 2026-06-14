@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
   CalendarDays,
+  Check,
   ChevronDown,
   CircleHelp,
   KeyRound,
@@ -608,23 +609,84 @@ function TermSwitcher({
   onChange: (id: string) => void;
   onManage: () => void;
 }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  const active = terms.find((t) => t.id === activeId);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   return (
     <div className="mb-6 flex items-center gap-2">
-      <CalendarDays className="h-4 w-4 shrink-0 text-muted" />
-      <div className="relative">
-        <select
-          value={activeId}
-          onChange={(e) => onChange(e.target.value)}
-          aria-label="Active term"
-          className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-surface pl-3.5 pr-9 text-sm font-semibold text-foreground outline-none transition-colors hover:bg-surface-2 focus:border-accent"
+      <div ref={ref} className="relative">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          className="flex h-9 cursor-pointer items-center gap-2 rounded-full border border-border bg-surface px-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-2"
         >
-          {sortTermsDesc(terms).map((t) => (
-            <option key={t.id} value={t.id}>
-              {termLabel(t)}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+          <CalendarDays className="h-4 w-4 text-muted" />
+          {active ? termLabel(active) : "Select term"}
+          <motion.span
+            animate={{ rotate: open ? 180 : 0 }}
+            transition={springs.snappy}
+            className="flex"
+          >
+            <ChevronDown className="h-3.5 w-3.5 text-muted" />
+          </motion.span>
+        </button>
+
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              role="listbox"
+              initial={{ opacity: 0, scale: 0.96, y: -6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -6 }}
+              transition={springs.snappy}
+              style={{ transformOrigin: "top left" }}
+              className="absolute left-0 top-full z-50 mt-2 max-h-72 w-56 overflow-auto rounded-xl border border-[color:var(--glass-border)] bg-surface-2 p-1 shadow-[var(--elev-shadow)]"
+            >
+              {sortTermsDesc(terms).map((t) => {
+                const isActive = t.id === activeId;
+                return (
+                  <button
+                    key={t.id}
+                    role="option"
+                    aria-selected={isActive}
+                    onClick={() => {
+                      onChange(t.id);
+                      setOpen(false);
+                    }}
+                    className={`flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                      isActive
+                        ? "bg-accent-dim font-semibold text-accent"
+                        : "text-foreground hover:bg-surface"
+                    }`}
+                  >
+                    <Check
+                      className={`h-3.5 w-3.5 shrink-0 ${
+                        isActive ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+                    <span className="truncate">{termLabel(t)}</span>
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       <button
         onClick={onManage}
