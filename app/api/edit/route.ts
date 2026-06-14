@@ -28,12 +28,20 @@ You are given the current course as JSON: a name and a list of categories, each 
 Apply the instruction, then return the FULL updated state:
 - name: the (possibly unchanged) course name.
 - categories: the complete updated list — every category, not just the changed ones. Keep untouched categories exactly as they were. Weights and scores are plain numbers (percent); use null for an ungraded score.
-- changes: a short list of plain-English descriptions of what you changed, e.g. "Midterm weight 30% → 25%", "Added Quiz (10%)", "Set Homework score to 95%". One entry per change.
+- changes: a short list of clear, complete sentences describing what you changed, written so a student instantly understands it. Always spell out the direction with "from … to …", and end each with a period. One sentence per change.
+
+Write changes EXACTLY in this style:
+- "Changed Midterm weight from 30% to 25%."
+- "Set the Homework score to 95%."
+- "Added a Quiz category worth 10%."
+- "Removed the Participation category."
+- "Renamed Test to Midterm."
+Never use arrows or shorthand like "30% → 25%" or "Midterm score 90% 45%" — always full sentences.
 
 Rules:
 - Change ONLY what the instruction asks; leave everything else identical.
 - The instruction may rename a category, change a weight or score, add a category, or remove one.
-- If the instruction is ambiguous or asks for something you can't do, return the categories unchanged and put a single explanation in "changes" starting with "Couldn't ".
+- If the instruction is ambiguous or asks for something you can't do, return the categories unchanged and put a single sentence in "changes" starting with "Couldn't " that explains why in plain language.
 - Never invent scores or categories the user didn't ask for.`;
 
 export async function POST(req: Request) {
