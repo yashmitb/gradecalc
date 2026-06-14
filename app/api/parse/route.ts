@@ -63,8 +63,9 @@ Return:
 - categories: each with a short name (e.g. "Homework", "Midterm", "Final", "Participation"), its weight as a percentage number (convert fractions like 0.2 → 20), and the current score as a percentage — only if you're confident it reflects the student's true standing under the syllabus's rules, otherwise null.
 - flags: a list of { category, reason } for each item you left null above, or any other ambiguity worth a human glance. Empty array if nothing needs attention.
 - gradingScale (optional): ONLY if the syllabus explicitly states a letter-grade scale (e.g. "A = 93-100, A- = 90-92, B+ = 87-89, ..."). Return each tier as { min: the minimum percent for that letter, letter, points: the GPA points if the syllabus states them, otherwise omit points }. If no explicit scale is given, omit gradingScale entirely — never invent one.
+- syllabusNotes (optional): if a syllabus document is attached, write a concise plain-text summary (under ~1500 characters) of the facts a student would later ask about, so an assistant can answer from it. Cover, when present: the grading/weighting policy in words, drop-lowest and replacement rules, late/makeup and attendance policies, rounding, extra credit, exam/quiz structure and any stated dates, required materials, and instructor/office-hours/contact info. Use short labeled lines or sentences — not the full syllabus text. Omit entirely if no syllabus document is attached (e.g. only a gradebook screenshot).
 
-Rules: weights are plain numbers that should sum to ~100. Never invent categories that aren't present.`;
+Rules: weights are plain numbers that should sum to ~100. Never invent categories that aren't present. Never invent syllabus facts — only summarize what's actually written.`;
 
 // Lets the client check (without hitting Gemini) whether a shared/free key is
 // configured on this deployment, so the UI can show the right key status.
@@ -219,6 +220,7 @@ export async function POST(req: Request) {
                 required: ["min", "letter"],
               },
             },
+            syllabusNotes: { type: Type.STRING, nullable: true },
           },
           required: ["name", "categories"],
         },
@@ -238,6 +240,7 @@ export async function POST(req: Request) {
       categories?: { name?: string; weight?: number; score?: number | null }[];
       flags?: { category?: string; reason?: string }[];
       gradingScale?: { min?: number; letter?: string; points?: number | null }[];
+      syllabusNotes?: string | null;
     };
 
     // Collapse any internal newlines / runs of whitespace the model may pull
@@ -292,11 +295,19 @@ export async function POST(req: Request) {
     const gradingScale =
       scaleTiers.length >= 2 ? normalizeScale(scaleTiers) : undefined;
 
+    // Key syllabus facts for the assistant — collapse blank lines but keep
+    // line breaks so labeled notes stay readable.
+    const rawNotes = String(data.syllabusNotes ?? "").trim();
+    const syllabusNotes = rawNotes
+      ? rawNotes.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").slice(0, 2000)
+      : undefined;
+
     return Response.json({
       name: clean(String(data.name ?? "")).slice(0, 80) || "Imported Course",
       categories,
       flags,
       ...(gradingScale ? { gradingScale } : {}),
+      ...(syllabusNotes ? { syllabusNotes } : {}),
     });
   } catch (err) {
     console.error("[parse] gemini error", err);

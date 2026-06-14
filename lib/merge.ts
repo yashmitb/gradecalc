@@ -88,7 +88,15 @@ export function planMerge(course: Course, parsed: ParsedCourse): MergePlan {
   }
 
   return {
-    merged: { ...course, categories: [...mergedExisting, ...addedCats] },
+    merged: {
+      ...course,
+      categories: [...mergedExisting, ...addedCats],
+      // A fresh syllabus upload refreshes the notes; a gradebook-only re-sync
+      // (no notes) leaves the existing ones untouched.
+      ...(parsed.syllabusNotes
+        ? { syllabusNotes: parsed.syllabusNotes }
+        : {}),
+    },
     rows,
     updated,
     added: addedCats.length,

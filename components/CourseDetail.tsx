@@ -452,7 +452,7 @@ export function CourseDetail({
           </span>
           <span className="flex items-center gap-2 text-xs text-muted">
             <span className="hidden sm:inline">
-              Units · GPA scale · color
+              Units · GPA scale · color · syllabus
             </span>
             <motion.span
               animate={{ rotate: customizeOpen ? 180 : 0 }}
@@ -554,6 +554,29 @@ export function CourseDetail({
                   <GradingScaleEditor
                     value={course.gradingScale}
                     onChange={(s) => onChange({ gradingScale: s })}
+                  />
+                </div>
+
+                {/* Syllabus notes — fed to the AI assistant */}
+                <div className="border-t border-border pt-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                      Syllabus notes
+                    </h3>
+                    <InfoTip
+                      align="start"
+                      label="Policies and details from your syllabus (auto-filled when you upload one). The Ask-AI assistant reads this to answer questions like late penalties or office hours. Edit freely."
+                    />
+                  </div>
+                  <textarea
+                    value={course.syllabusNotes ?? ""}
+                    onChange={(e) =>
+                      onChange({ syllabusNotes: e.target.value })
+                    }
+                    rows={4}
+                    placeholder="e.g. Lowest 2 quizzes dropped. Late work −10%/day. Office hours Tue 2–4pm. Final is cumulative."
+                    className="w-full resize-y rounded-xl border border-border bg-surface px-3 py-2.5 text-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent-dim"
+                    aria-label="Syllabus notes"
                   />
                 </div>
               </div>

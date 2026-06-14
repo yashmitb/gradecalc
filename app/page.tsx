@@ -92,6 +92,7 @@ export default function Home() {
         score: c.score,
       })),
       ...(parsed.gradingScale ? { gradingScale: parsed.gradingScale } : {}),
+      ...(parsed.syllabusNotes ? { syllabusNotes: parsed.syllabusNotes } : {}),
     };
     addCourse(course);
     setActiveId(course.id);

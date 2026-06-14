@@ -72,6 +72,9 @@ export function buildGradeContext(
       // The exact percent each letter requires in THIS course — use these for
       // any "can I get an X" question, not assumed cutoffs.
       gradeCutoffs: tiers.map((t) => `${t.letter}≥${t.min}%`).join(", "),
+      // Key facts pulled from the uploaded syllabus (policies, structure,
+      // logistics), if any — answer policy/logistics questions from this.
+      syllabusNotes: course.syllabusNotes ?? null,
       categories: course.categories.map((c) => ({
         name: c.name,
         weightPercent: c.weight,

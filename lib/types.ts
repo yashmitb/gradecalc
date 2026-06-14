@@ -26,6 +26,9 @@ export type Course = {
   gradingScale?: GradingScale;
   /** Which term (semester/quarter) this course belongs to. */
   termId?: string;
+  /** Key facts pulled from an uploaded syllabus (policies, structure, etc.) —
+   *  surfaced to the AI assistant and editable by the user. */
+  syllabusNotes?: string;
 };
 
 /** Something the AI couldn't resolve confidently and needs the user to confirm. */
@@ -44,6 +47,8 @@ export type ParsedCourse = {
   flags?: ParsedFlag[];
   /** Grade scale detected in the syllabus, if any. */
   gradingScale?: GradingScale;
+  /** Key facts pulled from the syllabus (policies, structure, logistics). */
+  syllabusNotes?: string;
 };
 
 export const LETTER_TARGETS: { label: string; min: number }[] = [
