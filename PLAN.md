@@ -157,15 +157,17 @@ what's in flight, and any decisions made along the way.
       - [x] Drop / replacement-rule detection from syllabus text — already
             handled by the existing parser + flags mechanism (route prompt
             Steps 3A-3C); surfaced in the "double-check a few things" screen.
-      - [ ] DEFERRED (left for review — ambiguous/risky per autonomous-run
-            guardrails): conversational "fix this field" correction (needs a
-            new AI endpoint + UX design; manual edit already covers it);
-            persisting per-field confidence highlighting into the course view
-            (marginal over flags, which already null + explain uncertain
-            scores); auto-detecting & storing a custom %→letter→GPA grading
-            scale (Phase 2 intentionally ships a fixed scale — integration
-            unclear, revisit with the user).
-- [~] Phase 5: Personalization / UX (partial — 3 of 4 shipped)
+      - [x] Conversational "fix this field" correction — /api/edit applies a
+            natural-language instruction ("midterm is 25%, not 30%", "add a 10%
+            quiz", "I got 95 on homework") and shows the changes for
+            confirmation before applying. Lives on the auto-fill review screen
+            and on each course detail page (components/AskAiFix.tsx).
+      - [x] Auto-detect & store a custom grading scale from the syllabus — see
+            the grading-scale note below.
+      - [ ] DEFERRED: per-field confidence highlighting persisted into the
+            course view — marginal over the existing flags mechanism, which
+            already nulls + explains uncertain scores.
+- [x] Phase 5: Personalization / UX (all 4 shipped)
       - [x] Course search/filter — name search on the dashboard once you have
             4+ courses, with clear button + empty state.
       - [x] Custom course colors — per-course accent (6-color curated palette)
@@ -175,11 +177,12 @@ what's in flight, and any decisions made along the way.
       - [x] PWA / install — web manifest + maskable icons + iOS meta so
             GradeHQ installs to a home screen and launches standalone.
             (Service-worker offline caching deferred — stale-cache risk.)
-      - [ ] DEFERRED (left for review per autonomous-run guardrails):
-            light/dark theme toggle. The whole design system (glass, specular,
-            ambient glow, accent, grid) is tuned for dark; a light theme is a
-            large design decision with high cross-app visual-bug risk — better
-            to design it deliberately with the user than guess.
+      - [x] Light / dark / system theme toggle — the whole design system now
+            re-skins from CSS variables via `data-theme` on <html>; the
+            frosted-glass look is translated to a light theme (glass, glow,
+            grid, specular, shadows all theme-aware). Preference persisted,
+            follows the OS on "system", no-flash via a beforeInteractive script,
+            toggled from the navbar.
 - [x] Final QA pass — full review at 390px (mobile) and 1280px (desktop)
       across all phases; verified no console errors, build + lint clean
       (only the pre-existing localStorage-hook set-state-in-effect lint
@@ -196,3 +199,9 @@ what's in flight, and any decisions made along the way.
         Lightened the GPA panel (borderless stats, no nested boxes).
       • Reusable InfoTip ("i") with viewport-clamped tooltips on the confusing
         bits: GPA projection, what-if scenarios, units, count-toward-GPA.
+- [x] Per-course custom grading scales — lib/scale.ts holds the canonical
+      default scale (single source of truth shared with letterFor + GPA points)
+      plus a "Letter only" preset. Each course can pick a preset or edit the
+      %→letter→GPA rows in a collapsible editor; letters and GPA points update
+      live everywhere. The syllabus parser detects an explicitly-stated scale
+      and new courses adopt it; everything falls back to the default.

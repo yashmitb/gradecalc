@@ -8,12 +8,14 @@ import {
   Plus,
   RefreshCw,
   RotateCcw,
+  Sparkles,
   Trash2,
   TriangleAlert,
 } from "lucide-react";
 import { Button, Card, GlassPanel, Input, Label, Pill } from "./ui";
 import { CategoryBreakdown, GradeProgressBar, StatusBadge } from "./Visualizations";
 import { InfoTip } from "./InfoTip";
+import { AskAiFix, type WireCategory } from "./AskAiFix";
 import { springs } from "@/lib/springs";
 import type { Category, Course } from "@/lib/types";
 import { LETTER_TARGETS } from "@/lib/types";
@@ -47,6 +49,8 @@ export function CourseDetail({
   onBack,
   onResync,
   onDelete,
+  apiKey,
+  onNeedKey,
 }: {
   course: Course;
   onChange: (patch: Partial<Course>) => void;
@@ -54,6 +58,9 @@ export function CourseDetail({
   /** Open the auto-fill dialog in re-sync mode to update this course. */
   onResync: () => void;
   onDelete: () => void;
+  /** Gemini key (own or shared) for the conversational "fix this" edits. */
+  apiKey: string;
+  onNeedKey: () => void;
 }) {
   const cats = course.categories;
   const tw = totalWeight(cats);
@@ -114,6 +121,23 @@ export function CourseDetail({
 
   const removeCat = (id: string) =>
     onChange({ categories: cats.filter((c) => c.id !== id) });
+
+  // Apply an AI "fix this" edit, reusing existing category ids by name so the
+  // UI stays stable for untouched rows.
+  const applyAiEdit = (result: { name: string; categories: WireCategory[] }) => {
+    const byName = new Map(cats.map((c) => [c.name.toLowerCase().trim(), c]));
+    const used = new Set<string>();
+    const next = result.categories.map((rc) => {
+      const key = rc.name.toLowerCase().trim();
+      const existing = byName.get(key);
+      if (existing && !used.has(key)) {
+        used.add(key);
+        return { ...existing, name: rc.name, weight: rc.weight, score: rc.score };
+      }
+      return { id: uid(), name: rc.name, weight: rc.weight, score: rc.score };
+    });
+    onChange({ name: result.name, categories: next });
+  };
 
   const result = targetCatId
     ? neededScore(cats, targetCatId, targetGrade)
@@ -340,6 +364,30 @@ export function CourseDetail({
             </Pill>
           </div>
         </div>
+      </Card>
+
+      <Card className="mt-6 p-6">
+        <div className="mb-3 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-accent" />
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Ask AI to fix
+          </h2>
+          <InfoTip
+            align="start"
+            label="Describe a change in plain words — “midterm is 25% not 30%”, “add a 10% quiz”, “I got 95 on homework”. You'll see exactly what changes before it applies."
+          />
+        </div>
+        <AskAiFix
+          name={course.name}
+          categories={cats.map((c) => ({
+            name: c.name,
+            weight: c.weight,
+            score: c.score,
+          }))}
+          apiKey={apiKey}
+          onNeedKey={onNeedKey}
+          onApply={applyAiEdit}
+        />
       </Card>
 
       <div className="mt-6">

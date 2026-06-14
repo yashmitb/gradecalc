@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { Button, GlassPanel, Input } from "./ui";
+import { AskAiFix } from "./AskAiFix";
 import { springs } from "@/lib/springs";
 import { fmt } from "@/lib/grades";
 import { planMerge, type MergePlan } from "@/lib/merge";
@@ -263,6 +264,25 @@ export function Autofill({
                       </li>
                     ))}
                   </ul>
+
+                  <div className="mt-5 border-t border-border pt-4">
+                    <p className="mb-2 text-xs font-semibold text-muted">
+                      Something off? Tell the AI what to fix.
+                    </p>
+                    <AskAiFix
+                      name={pending.name}
+                      categories={pending.categories}
+                      apiKey={apiKey}
+                      onNeedKey={onNeedKey}
+                      onApply={(r) =>
+                        setPending({
+                          ...pending,
+                          name: r.name,
+                          categories: r.categories,
+                        })
+                      }
+                    />
+                  </div>
 
                   <div className="mt-5 flex justify-end gap-2">
                     <Button variant="ghost" onClick={() => setPending(null)}>

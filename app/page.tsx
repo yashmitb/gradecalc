@@ -123,6 +123,8 @@ export default function Home() {
               removeCourse(active.id);
               setActiveId(null);
             }}
+            apiKey={key}
+            onNeedKey={() => setKeyOpen(true)}
           />
         ) : (
           <main className="mx-auto max-w-3xl">
