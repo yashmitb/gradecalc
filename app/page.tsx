@@ -171,64 +171,40 @@ export default function Home() {
           />
         ) : (
           <main className="mx-auto max-w-3xl">
-            {/* Hero */}
-            <motion.div
-              className="mb-14 max-w-2xl"
-              initial="hidden"
-              animate="show"
-              variants={{
-                hidden: {},
-                show: { transition: { staggerChildren: 0.09 } },
-              }}
-            >
-              <motion.h1
-                variants={fadeUp}
-                className="text-balance text-5xl font-extrabold leading-[0.95] tracking-tighter sm:text-6xl"
-              >
-                What do you need on the{" "}
-                <span className="relative inline-block">
-                  final
-                  <motion.span
-                    className="absolute inset-x-0 -bottom-1 h-[3px] origin-left rounded-full bg-accent"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ ...springs.smooth, delay: 0.45 }}
-                  />
-                </span>
-                ?
-              </motion.h1>
-              <motion.p
-                variants={fadeUp}
-                className="mt-5 max-w-md text-pretty text-base leading-relaxed text-muted"
-              >
-                Add your courses, enter your grades, and get the exact score
-                you need to land the grade you want.
-              </motion.p>
-              <motion.div
-                variants={fadeUp}
-                className="mt-7 flex flex-wrap items-center gap-2.5"
-              >
-                <Button onClick={() => setAutofillOpen(true)}>
-                  <Sparkles className="h-4 w-4" />
-                  Auto-fill from syllabus
-                </Button>
-                <Button variant="outline" onClick={handleAddManual}>
-                  <Plus className="h-4 w-4" />
-                  Add course manually
-                </Button>
-              </motion.div>
-            </motion.div>
-
             {!ready || !terms.ready ? null : courses.length === 0 ? (
-              <EmptyState onAdd={handleAddManual} />
+              <Hero
+                onAutofill={() => setAutofillOpen(true)}
+                onAddManual={handleAddManual}
+              />
             ) : (
               <>
-                <TermSwitcher
-                  terms={terms.terms}
-                  activeId={terms.activeId}
-                  onChange={terms.setActive}
-                  onManage={() => setSettingsOpen(true)}
-                />
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={springs.smooth}
+                  className="mb-8 flex flex-wrap items-center justify-between gap-3"
+                >
+                  <TermSwitcher
+                    terms={terms.terms}
+                    activeId={terms.activeId}
+                    onChange={terms.setActive}
+                    onManage={() => setSettingsOpen(true)}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" onClick={() => setAutofillOpen(true)}>
+                      <Sparkles className="h-4 w-4" />
+                      <span className="hidden sm:inline">Auto-fill</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddManual}
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="hidden sm:inline">Add</span>
+                    </Button>
+                  </div>
+                </motion.div>
                 {termCourses.length === 0 ? (
                   <TermEmptyState
                     label={activeTerm ? termLabel(activeTerm) : "this term"}
@@ -628,7 +604,7 @@ function TermSwitcher({
   }, [open]);
 
   return (
-    <div className="mb-6 flex items-center gap-2">
+    <div className="flex items-center gap-2">
       <div ref={ref} className="relative">
         <button
           onClick={() => setOpen((v) => !v)}
@@ -721,18 +697,57 @@ function TermEmptyState({
   );
 }
 
-function EmptyState({ onAdd }: { onAdd: () => void }) {
+/** First-run landing: the pitch + the two ways in. Only shown with no courses. */
+function Hero({
+  onAutofill,
+  onAddManual,
+}: {
+  onAutofill: () => void;
+  onAddManual: () => void;
+}) {
   return (
-    <Card className="flex flex-col items-start gap-4 p-8">
-      <h2 className="text-xl font-bold tracking-tight">No courses yet</h2>
-      <p className="max-w-sm text-sm leading-relaxed text-muted">
-        Auto-fill from your syllabus, or add a course by hand. Takes about 30
-        seconds.
-      </p>
-      <Button variant="outline" size="sm" onClick={onAdd}>
-        <Plus className="h-4 w-4" />
-        Add your first course
-      </Button>
-    </Card>
+    <motion.div
+      className="max-w-2xl"
+      initial="hidden"
+      animate="show"
+      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09 } } }}
+    >
+      <motion.h1
+        variants={fadeUp}
+        className="text-balance text-5xl font-extrabold leading-[0.95] tracking-tighter sm:text-6xl"
+      >
+        What do you need on the{" "}
+        <span className="relative inline-block">
+          final
+          <motion.span
+            className="absolute inset-x-0 -bottom-1 h-[3px] origin-left rounded-full bg-accent"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ ...springs.smooth, delay: 0.45 }}
+          />
+        </span>
+        ?
+      </motion.h1>
+      <motion.p
+        variants={fadeUp}
+        className="mt-5 max-w-md text-pretty text-base leading-relaxed text-muted"
+      >
+        Add your courses, enter your grades, and get the exact score you need to
+        land the grade you want.
+      </motion.p>
+      <motion.div
+        variants={fadeUp}
+        className="mt-7 flex flex-wrap items-center gap-2.5"
+      >
+        <Button onClick={onAutofill}>
+          <Sparkles className="h-4 w-4" />
+          Auto-fill from syllabus
+        </Button>
+        <Button variant="outline" onClick={onAddManual}>
+          <Plus className="h-4 w-4" />
+          Add course manually
+        </Button>
+      </motion.div>
+    </motion.div>
   );
 }

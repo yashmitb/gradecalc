@@ -69,6 +69,7 @@ export function CourseDetail({
 
   const ungraded = cats.filter((c) => c.score === null);
   const [targetCatId, setTargetCatId] = React.useState<string>("");
+  const [customizeOpen, setCustomizeOpen] = React.useState(false);
   const targetGrade = course.targetGrade ?? 90;
   const setTargetGrade = (v: number) => onChange({ targetGrade: v });
   const status = courseStatus(cats, targetGrade);
@@ -210,78 +211,6 @@ export function CourseDetail({
             <GradeProgressBar current={cur} target={targetGrade} status={status} />
           </div>
         )}
-
-        <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-border pt-5 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-              Units
-            </span>
-            <Input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              value={course.credits ?? DEFAULT_CREDITS}
-              onChange={(e) =>
-                onChange({
-                  credits: Math.max(0, parseFloat(e.target.value) || 0),
-                })
-              }
-              className="h-9 w-16 px-2 text-center"
-              aria-label="Credit units"
-            />
-            <InfoTip
-              align="start"
-              label="Credit hours for this course — used to weight it in your GPA."
-            />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <label className="flex cursor-pointer items-center gap-2 text-muted">
-              <input
-                type="checkbox"
-                checked={includeInGPA}
-                onChange={(e) => onChange({ includeInGPA: e.target.checked })}
-                className="h-4 w-4 cursor-pointer rounded border-border bg-surface accent-[var(--color-accent)]"
-              />
-              Count toward GPA
-            </label>
-            <InfoTip
-              align="start"
-              label="Turn this off for pass/fail or audited courses so they don't affect your GPA."
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-              Color
-            </span>
-            <div className="flex items-center gap-1.5">
-              {COURSE_COLORS.map((c) => {
-                const selected =
-                  (course.color ?? DEFAULT_COURSE_COLOR) === c.key;
-                return (
-                  <motion.button
-                    key={c.key}
-                    onClick={() => onChange({ color: c.key })}
-                    whileHover={{ scale: 1.15 }}
-                    whileTap={{ scale: 0.9 }}
-                    transition={springs.snappy}
-                    aria-label={`${c.label} accent`}
-                    aria-pressed={selected}
-                    className={cn(
-                      "h-5 w-5 cursor-pointer rounded-full ring-2 ring-offset-2 ring-offset-surface transition-shadow",
-                      selected ? "ring-foreground" : "ring-transparent",
-                    )}
-                    style={{ backgroundColor: c.base }}
-                  />
-                );
-              })}
-            </div>
-          </div>
-          {gpaPoints !== null && includeInGPA && (
-            <span className="tnum ml-auto rounded-full border border-accent-soft bg-accent-dim px-2.5 py-1 text-xs font-bold text-accent">
-              {fmtGPA(gpaPoints)} GPA pts
-            </span>
-          )}
-        </div>
       </Card>
 
       {/* Category breakdown */}
@@ -366,37 +295,6 @@ export function CourseDetail({
         </div>
       </Card>
 
-      <Card className="mt-6 p-6">
-        <div className="mb-3 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-accent" />
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Ask AI to fix
-          </h2>
-          <InfoTip
-            align="start"
-            label="Describe a change in plain words — “midterm is 25% not 30%”, “add a 10% quiz”, “I got 95 on homework”. You'll see exactly what changes before it applies."
-          />
-        </div>
-        <AskAiFix
-          name={course.name}
-          categories={cats.map((c) => ({
-            name: c.name,
-            weight: c.weight,
-            score: c.score,
-          }))}
-          apiKey={apiKey}
-          onNeedKey={onNeedKey}
-          onApply={applyAiEdit}
-        />
-      </Card>
-
-      <div className="mt-6">
-        <GradingScaleEditor
-          value={course.gradingScale}
-          onChange={(s) => onChange({ gradingScale: s })}
-        />
-      </div>
-
       {!weightOk && (
         <p className="mt-3 flex items-center gap-1.5 px-0.5 text-sm text-muted">
           <TriangleAlert className="h-4 w-4" />
@@ -471,13 +369,160 @@ export function CourseDetail({
       ) : (
         cur !== null && <FinalGrade grade={cur} scale={scale} />
       )}
+
+      {/* Everything optional lives behind one quiet toggle. */}
+      <Card className="mt-10 overflow-hidden">
+        <button
+          onClick={() => setCustomizeOpen((v) => !v)}
+          aria-expanded={customizeOpen}
+          className="flex w-full cursor-pointer items-center justify-between gap-3 p-5 text-left"
+        >
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Customize
+          </span>
+          <span className="flex items-center gap-2 text-xs text-muted">
+            <span className="hidden sm:inline">
+              Units · GPA scale · color · AI fix
+            </span>
+            <motion.span
+              animate={{ rotate: customizeOpen ? 180 : 0 }}
+              transition={springs.snappy}
+              className="flex"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </motion.span>
+          </span>
+        </button>
+
+        <AnimatePresence initial={false}>
+          {customizeOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={springs.smooth}
+              className="overflow-hidden"
+            >
+              <div className="space-y-6 border-t border-border p-6">
+                {/* Units · count toward GPA · color */}
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+                      Units
+                    </span>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      value={course.credits ?? DEFAULT_CREDITS}
+                      onChange={(e) =>
+                        onChange({
+                          credits: Math.max(0, parseFloat(e.target.value) || 0),
+                        })
+                      }
+                      className="h-9 w-16 px-2 text-center"
+                      aria-label="Credit units"
+                    />
+                    <InfoTip
+                      align="start"
+                      label="Credit hours for this course — used to weight it in your GPA."
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <label className="flex cursor-pointer items-center gap-2 text-muted">
+                      <input
+                        type="checkbox"
+                        checked={includeInGPA}
+                        onChange={(e) =>
+                          onChange({ includeInGPA: e.target.checked })
+                        }
+                        className="h-4 w-4 cursor-pointer rounded border-border bg-surface accent-[var(--color-accent)]"
+                      />
+                      Count toward GPA
+                    </label>
+                    <InfoTip
+                      align="start"
+                      label="Turn this off for pass/fail or audited courses so they don't affect your GPA."
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+                      Color
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {COURSE_COLORS.map((c) => {
+                        const selected =
+                          (course.color ?? DEFAULT_COURSE_COLOR) === c.key;
+                        return (
+                          <motion.button
+                            key={c.key}
+                            onClick={() => onChange({ color: c.key })}
+                            whileHover={{ scale: 1.15 }}
+                            whileTap={{ scale: 0.9 }}
+                            transition={springs.snappy}
+                            aria-label={`${c.label} accent`}
+                            aria-pressed={selected}
+                            className={cn(
+                              "h-5 w-5 cursor-pointer rounded-full ring-2 ring-offset-2 ring-offset-surface transition-shadow",
+                              selected ? "ring-foreground" : "ring-transparent",
+                            )}
+                            style={{ backgroundColor: c.base }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {gpaPoints !== null && includeInGPA && (
+                    <span className="tnum ml-auto rounded-full border border-accent-soft bg-accent-dim px-2.5 py-1 text-xs font-bold text-accent">
+                      {fmtGPA(gpaPoints)} GPA pts
+                    </span>
+                  )}
+                </div>
+
+                {/* Grading scale */}
+                <div className="border-t border-border pt-5">
+                  <GradingScaleEditor
+                    value={course.gradingScale}
+                    onChange={(s) => onChange({ gradingScale: s })}
+                  />
+                </div>
+
+                {/* Ask AI to fix */}
+                <div className="border-t border-border pt-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-accent" />
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                      Ask AI to fix
+                    </h3>
+                    <InfoTip
+                      align="start"
+                      label="Describe a change in plain words — “midterm is 25% not 30%”, “add a 10% quiz”, “I got 95 on homework”. You'll see exactly what changes before it applies."
+                    />
+                  </div>
+                  <AskAiFix
+                    name={course.name}
+                    categories={cats.map((c) => ({
+                      name: c.name,
+                      weight: c.weight,
+                      score: c.score,
+                    }))}
+                    apiKey={apiKey}
+                    onNeedKey={onNeedKey}
+                    onApply={applyAiEdit}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
     </motion.div>
   );
 }
 
 /**
- * Collapsible per-course grading scale: pick a preset, or edit the %→letter→GPA
- * rows directly. Stored on the course; `undefined` means "use the default".
+ * Inline per-course grading scale editor: pick a preset, or edit the
+ * %→letter→GPA rows directly. Stored on the course; `undefined` = use default.
  */
 function GradingScaleEditor({
   value,
@@ -486,11 +531,8 @@ function GradingScaleEditor({
   value?: GradingScale;
   onChange: (scale: GradingScale | undefined) => void;
 }) {
-  const [open, setOpen] = React.useState(false);
   const scale = value ?? DEFAULT_SCALE;
   const activePreset = presetIdFor(value);
-  const presetName =
-    SCALE_PRESETS.find((p) => p.id === activePreset)?.name ?? "Custom";
 
   const setTier = (i: number, patch: Partial<GradingScale[number]>) =>
     onChange(scale.map((t, j) => (j === i ? { ...t, ...patch } : t)));
@@ -505,143 +547,112 @@ function GradingScaleEditor({
   };
 
   return (
-    <Card className="overflow-hidden">
-      <div className="flex items-center justify-between gap-3 p-6">
-        <div className="flex items-center gap-2">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Grading scale
-          </h2>
-          <InfoTip
-            align="start"
-            label="How percentages become letters and GPA points for this course. Auto-detected from a syllabus when possible — or pick a preset and fine-tune it."
-          />
-        </div>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-muted transition-colors hover:text-foreground"
-        >
-          <span>{presetName}</span>
-          <motion.span
-            animate={{ rotate: open ? 180 : 0 }}
-            transition={springs.snappy}
-            className="flex"
+    <div>
+      <div className="mb-3 flex items-center gap-2">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+          Grading scale
+        </h3>
+        <InfoTip
+          align="start"
+          label="How percentages become letters and GPA points for this course. Auto-detected from a syllabus when possible — or pick a preset and fine-tune it."
+        />
+      </div>
+      <div className="mb-4 flex flex-wrap items-center gap-1.5">
+        {SCALE_PRESETS.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => applyPreset(p.id)}
+            className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              activePreset === p.id
+                ? "bg-accent text-[#0a0a0a]"
+                : "border border-border text-muted hover:bg-surface-2 hover:text-foreground"
+            }`}
           >
-            <ChevronDown className="h-3.5 w-3.5" />
-          </motion.span>
-        </button>
+            {p.name}
+          </button>
+        ))}
+        {value !== undefined && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onChange(undefined)}
+            className="ml-auto"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset
+          </Button>
+        )}
       </div>
 
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={springs.smooth}
-            className="overflow-hidden"
+      <div className="grid grid-cols-[1fr_84px_84px_44px] gap-2 px-1 pb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+        <span>Letter</span>
+        <span className="text-right">Min %</span>
+        <span className="text-right">GPA</span>
+        <span />
+      </div>
+      <div className="space-y-1.5">
+        {scale.map((t, i) => (
+          <div
+            key={i}
+            className="grid grid-cols-[1fr_84px_84px_44px] items-center gap-2"
           >
-            <div className="border-t border-border p-6 pt-5">
-              <div className="mb-4 flex flex-wrap items-center gap-1.5">
-                {SCALE_PRESETS.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => applyPreset(p.id)}
-                    className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      activePreset === p.id
-                        ? "bg-accent text-[#0a0a0a]"
-                        : "border border-border text-muted hover:bg-surface-2 hover:text-foreground"
-                    }`}
-                  >
-                    {p.name}
-                  </button>
-                ))}
-                {value !== undefined && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onChange(undefined)}
-                    className="ml-auto"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    Reset
-                  </Button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-[1fr_84px_84px_44px] gap-2 px-1 pb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                <span>Letter</span>
-                <span className="text-right">Min %</span>
-                <span className="text-right">GPA</span>
-                <span />
-              </div>
-              <div className="space-y-1.5">
-                {scale.map((t, i) => (
-                  <div
-                    key={i}
-                    className="grid grid-cols-[1fr_84px_84px_44px] items-center gap-2"
-                  >
-                    <Input
-                      value={t.letter}
-                      onChange={(e) => setTier(i, { letter: e.target.value })}
-                      className="h-10"
-                      aria-label={`Tier ${i + 1} letter`}
-                    />
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      value={Number.isFinite(t.min) ? t.min : ""}
-                      onChange={(e) =>
-                        setTier(i, {
-                          min: Math.max(
-                            0,
-                            Math.min(100, parseFloat(e.target.value) || 0),
-                          ),
-                        })
-                      }
-                      className="h-10 text-right"
-                      aria-label={`Tier ${i + 1} minimum percent`}
-                    />
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      step={0.1}
-                      value={Number.isFinite(t.points) ? t.points : ""}
-                      onChange={(e) =>
-                        setTier(i, {
-                          points: Math.max(
-                            0,
-                            Math.min(5, parseFloat(e.target.value) || 0),
-                          ),
-                        })
-                      }
-                      className="h-10 text-right"
-                      aria-label={`Tier ${i + 1} GPA points`}
-                    />
-                    <button
-                      onClick={() => removeTier(i)}
-                      className="flex h-10 w-11 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-red-400 cursor-pointer"
-                      aria-label={`Remove tier ${i + 1}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={addTier}
-                className="mt-2 -ml-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add row
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </Card>
+            <Input
+              value={t.letter}
+              onChange={(e) => setTier(i, { letter: e.target.value })}
+              className="h-10"
+              aria-label={`Tier ${i + 1} letter`}
+            />
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={Number.isFinite(t.min) ? t.min : ""}
+              onChange={(e) =>
+                setTier(i, {
+                  min: Math.max(
+                    0,
+                    Math.min(100, parseFloat(e.target.value) || 0),
+                  ),
+                })
+              }
+              className="h-10 text-right"
+              aria-label={`Tier ${i + 1} minimum percent`}
+            />
+            <Input
+              type="number"
+              inputMode="decimal"
+              step={0.1}
+              value={Number.isFinite(t.points) ? t.points : ""}
+              onChange={(e) =>
+                setTier(i, {
+                  points: Math.max(
+                    0,
+                    Math.min(5, parseFloat(e.target.value) || 0),
+                  ),
+                })
+              }
+              className="h-10 text-right"
+              aria-label={`Tier ${i + 1} GPA points`}
+            />
+            <button
+              onClick={() => removeTier(i)}
+              className="flex h-10 w-11 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-red-400 cursor-pointer"
+              aria-label={`Remove tier ${i + 1}`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={addTier}
+        className="mt-2 -ml-2"
+      >
+        <Plus className="h-4 w-4" />
+        Add row
+      </Button>
+    </div>
   );
 }
 
