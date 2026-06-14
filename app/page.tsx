@@ -24,6 +24,7 @@ import { GitHubBadge } from "@/components/GitHubBadge";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { StatusBadge } from "@/components/Visualizations";
 import { GPAPanel } from "@/components/GPAPanel";
+import { GradeChat } from "@/components/GradeChat";
 import { accentStyle, courseColorBase } from "@/lib/colors";
 import { useCourses } from "@/lib/useCourses";
 import { useApiKey } from "@/lib/useApiKey";
@@ -57,6 +58,7 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   // When set, the auto-fill dialog opens in "re-sync" mode for this course.
   const [mergeTargetId, setMergeTargetId] = React.useState<string | null>(null);
+  const [chatOpen, setChatOpen] = React.useState(false);
 
   const active = courses.find((c) => c.id === activeId) ?? null;
   const mergeTarget = courses.find((c) => c.id === mergeTargetId) ?? null;
@@ -145,6 +147,17 @@ export default function Home() {
         updateProfile={updateProfile}
       />
 
+      <GradeChat
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        termCourses={termCourses}
+        allCourses={courses}
+        system={terms.system}
+        profile={profile}
+        apiKey={key}
+        onNeedKey={() => setKeyOpen(true)}
+      />
+
       <NavBar
         hasKey={hasKey}
         hasServerKey={hasServerKey}
@@ -152,6 +165,8 @@ export default function Home() {
         onKey={() => setKeyOpen(true)}
         onHelp={onboarding.reopen}
         onSettings={() => setSettingsOpen(true)}
+        onAsk={() => setChatOpen(true)}
+        canAsk={ready && courses.length > 0}
       />
 
       <div className="px-5 pt-28 sm:pt-32">
@@ -244,6 +259,8 @@ function NavBar({
   onKey,
   onHelp,
   onSettings,
+  onAsk,
+  canAsk,
 }: {
   hasKey: boolean;
   hasServerKey: boolean | null;
@@ -251,6 +268,8 @@ function NavBar({
   onKey: () => void;
   onHelp: () => void;
   onSettings: () => void;
+  onAsk: () => void;
+  canAsk: boolean;
 }) {
   const [scrolled, setScrolled] = React.useState(false);
 
@@ -318,6 +337,19 @@ function NavBar({
         </span>
       </button>
       <div className="flex items-center gap-2">
+        {canAsk && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onAsk}
+            aria-label="Ask about your grades"
+            title="Ask about your grades"
+            className="border-accent-soft bg-accent-dim text-accent hover:bg-accent-dim hover:border-accent"
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="hidden sm:inline">Ask AI</span>
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
