@@ -21,6 +21,7 @@ import { ApiKeyDialog } from "@/components/ApiKeyDialog";
 import { CourseDetail } from "@/components/CourseDetail";
 import { Welcome } from "@/components/Welcome";
 import { GitHubBadge } from "@/components/GitHubBadge";
+import { ProductHuntBadge } from "@/components/ProductHuntBadge";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { StatusBadge } from "@/components/Visualizations";
 import { GPAPanel } from "@/components/GPAPanel";
@@ -244,11 +245,14 @@ export default function Home() {
           </main>
         )}
 
-        <footer className="mx-auto mt-20 max-w-3xl border-t border-border pt-6 text-xs leading-relaxed text-muted">
-          Free and open. No account, no tracking — your grades stay in your
-          browser. They&apos;re only sent out when you use an AI feature
-          (auto-fill, Ask AI, or fix-with-AI), which sends what&apos;s needed to
-          Google Gemini to answer.
+        <footer className="mx-auto mt-20 max-w-3xl border-t border-border pt-6">
+          <ProductHuntBadge />
+          <p className="mt-5 text-xs leading-relaxed text-muted">
+            Free and open. No account, no tracking — your grades stay in your
+            browser. They&apos;re only sent out when you use an AI feature
+            (auto-fill, Ask AI, or fix-with-AI), which sends what&apos;s needed
+            to Google Gemini to answer.
+          </p>
         </footer>
       </div>
     </div>
